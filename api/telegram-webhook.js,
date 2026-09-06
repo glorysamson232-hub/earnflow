@@ -1,0 +1,68 @@
+// api/telegram-webhook.js
+//
+// Telegram calls this URL every time someone messages your bot (once
+// you've registered it as your webhook — see setup instructions).
+// Right now it only handles /start: it replies with a launch card
+// containing a button that opens your Mini App, carrying along a
+// referral code if the /start included one.
+
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET;
+const APP_URL = process.env.APP_URL; // e.g. https://earnflow-sage.vercel.app
+
+async function sendMessage(chatId, text, replyMarkup) {
+  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      parse_mode: "HTML",
+      reply_markup: replyMarkup,
+    }),
+  });
+}
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(200).send("ok"); // Telegram only ever POSTs; anything else, just no-op
+  }
+
+  // Verify this really came from Telegram, not some random POST to a guessed URL
+  const incomingSecret = req.headers["x-telegram-bot-api-secret-token"];
+  if (!WEBHOOK_SECRET || incomingSecret !== WEBHOOK_SECRET) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const update = req.body;
+    const message = update.message;
+
+    if (message && typeof message.text === "string" && message.text.startsWith("/start")) {
+      const chatId = message.chat.id;
+      const parts = message.text.split(" ");
+      const referralCode = parts.length > 1 ? parts[1].trim() : "";
+
+      const appUrl = referralCode
+        ? `${APP_URL}/?ref=${encodeURIComponent(referralCode)}`
+        : APP_URL;
+
+      await sendMessage(
+        chatId,
+        "👋 Welcome to <b>EarnFlow</b>!\n\nComplete tasks, invite friends, and withdraw in USDT or TON.\n\nTap below to launch the app:",
+        {
+          inline_keyboard: [
+            [{ text: "🚀 Launch EarnFlow", web_app: { url: appUrl } }],
+          ],
+        }
+      );
+    }
+
+    // Always 200 quickly — Telegram retries aggressively if it doesn't
+    // get a fast response, which can cause duplicate messages.
+    return res.status(200).send("ok");
+  } catch (err) {
+    console.error(err);
+    return res.status(200).send("ok"); // still 200 so Telegram doesn't hammer retries
+  }
+}
