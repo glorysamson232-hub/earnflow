@@ -34,7 +34,6 @@
   h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
   .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";}
 
-  /* Top bar */
   .topbar{
     padding:18px 20px 14px;
     display:flex;align-items:center;justify-content:space-between;
@@ -56,7 +55,6 @@
 
   main{flex:1;padding:20px 20px 96px;overflow-y:auto;}
 
-  /* Balance ticker card */
   .balance-card{
     background:var(--ink-2);
     border:1px solid var(--line);
@@ -104,7 +102,6 @@
   .pill-review{background:rgba(133,147,166,0.2);color:var(--slate);}
   .pill-rejected{background:rgba(217,86,75,0.15);color:var(--red);}
 
-  /* Referrals */
   .ref-link-box{
     display:flex;gap:8px;align-items:center;
     background:var(--ink-3);border:1px solid var(--line);border-radius:10px;
@@ -118,7 +115,6 @@
   .ref-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
   .ref-row:last-child{border-bottom:none;}
 
-  /* Withdraw */
   .field{margin-bottom:14px;}
   .field label{display:block;font-size:12px;color:var(--slate);margin-bottom:6px;}
   .field input, .field select{
@@ -143,7 +139,6 @@
     border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:14px;
   }
 
-  /* Bottom nav */
   .navbar{
     position:absolute;bottom:0;left:0;right:0;
     background:var(--ink-2);border-top:1px solid var(--line);
@@ -156,7 +151,6 @@
   .navbtn.active{color:var(--gold);}
   .navbtn .ic{font-size:18px;line-height:1;}
 
-  /* Admin */
   .admin-section{margin-bottom:22px;}
   .admin-section h3{font-size:14px;margin:0 0 12px;color:var(--gold);}
   .row2{display:flex;gap:10px;}
@@ -195,7 +189,7 @@ const uid = (p) => p + "_" + Math.random().toString(36).slice(2,9);
 
 function defaultAdminConfig(){
   return {
-    pointsPerDollar: 10000, // 100 points = $0.01  ->  10,000 points = $1.00
+    pointsPerDollar: 10000,
     referralQualificationTasks: 3,
     referralTiers: [
       { id: uid("tier"), minRef: 1,   maxRef: 10,   reward: 100 },
@@ -234,9 +228,9 @@ function defaultUserState(){
     totalReferralEarnings: 0,
     totalWithdrawn: 0,
     completedTaskIds: [],
-    referrals: [], // {id, name, tasksCompleted, qualified, dateAdded}
+    referrals: [],
     wallets: { USDT: "", TON: "" },
-    withdrawalHistory: [], // {id, method, points, usd, fee, net, wallet, date, status}
+    withdrawalHistory: [],
     withdrawalsToday: 0,
     lastWithdrawalDay: null,
   };
@@ -270,16 +264,11 @@ function withinWithdrawalWindow(cfg){
   return curMin >= openMin && curMin <= closeMin;
 }
 function currentTierReward(cfg, qualifiedCount){
-  const n = qualifiedCount + 1; // the tier this NEXT qualified referral falls into
+  const n = qualifiedCount + 1;
   const tier = cfg.referralTiers.find(t => n >= t.minRef && n <= t.maxRef);
   return tier ? tier.reward : cfg.referralTiers[cfg.referralTiers.length-1].reward;
 }
 
-// Change this to your own secret before deploying — this is what makes the
-// admin link private. Anyone with ?key=THIS_VALUE in the URL gets in, so
-// treat it like a password and don't share it publicly. For a real
-// production deploy, move this check into your EdgeOne Edge Function
-// (server-side) rather than relying on client-side JS alone.
 const ADMIN_SECRET = "earnflow-admin-7x9k2";
 
 function maskWallet(addr){
@@ -287,8 +276,6 @@ function maskWallet(addr){
   return addr.slice(0,4) + "••••" + addr.slice(-4);
 }
 
-// Converts the /api/bootstrap response (snake_case, straight from Supabase)
-// into the shape the UI components expect.
 function mapBootstrapToState(data){
   const cfg = data.config;
   const adminConfig = {
@@ -343,7 +330,6 @@ function mapBootstrapToState(data){
   return { adminConfig, userState };
 }
 
-
 function App(){
   const [adminConfig, setAdminConfig] = useState(defaultAdminConfig());
   const [userState, setUserState] = useState(defaultUserState());
@@ -394,7 +380,6 @@ function App(){
     setLoaded(true);
   }, []);
 
-  // Load real account data from Telegram + Supabase on open
   useEffect(() => {
     const tg = window.Telegram && window.Telegram.WebApp;
     if(tg) tg.ready();
@@ -492,4 +477,35 @@ function TopBar({ value }){
         <div className="brand-name">EarnFlow</div>
       </div>
       {adminMode && (
-        <button className="admin-toggle active" onClick={() =
+        <button className="admin-toggle active" onClick={() => setAdminMode(false)}>
+          Exit Admin
+        </button>
+      )}
+    </div>
+  );
+}
+
+function BottomNav({ value }){
+  const { tab, setTab } = value;
+  const items = [
+    { key: "home", label: "Home", icon: "◆" },
+    { key: "tasks", label: "Tasks", icon: "✓" },
+    { key: "referrals", label: "Referrals", icon: "↗" },
+    { key: "withdraw", label: "Withdraw", icon: "$" },
+  ];
+  return (
+    <div className="navbar">
+      {items.map(it => (
+        <button key={it.key} className={"navbtn" + (tab===it.key ? " active":"")} onClick={() => setTab(it.key)}>
+          <span className="ic">{it.icon}</span>
+          <span>{it.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function HomeTab({ value }){
+  const { userState, adminConfig, setTab } = value;
+  const usd = pointsToUsd(userState.pointsBalance, adminConfig.pointsPerDollar);
+  r
