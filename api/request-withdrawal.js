@@ -25,11 +25,15 @@ async function supabaseFetch(path, options = {}) {
   return res.json();
 }
 
-// Checks whether "now" falls inside the admin's configured withdrawal window
+// Checks whether "now" falls inside the admin's configured withdrawal window.
+// Assumes WAT (West Africa Time, UTC+1, no daylight saving) — adjust the
+// offset here if your users are ever in a different timezone.
+const TIMEZONE_OFFSET_HOURS = 1; // WAT = UTC+1
+
 function withinWithdrawalWindow(config) {
-  const now = new Date();
+  const now = new Date(Date.now() + TIMEZONE_OFFSET_HOURS * 60 * 60 * 1000);
   const dayCodes = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
-  const todayCode = dayCodes[now.getUTCDay()]; // adjust to your users' timezone if needed
+  const todayCode = dayCodes[now.getUTCDay()];
   if (!config.withdrawal_days.includes(todayCode)) return false;
 
   const [openH, openM] = config.withdrawal_open.split(":").map(Number);
@@ -143,5 +147,4 @@ export default async function handler(req, res) {
     console.error(err);
     return res.status(500).json({ error: "Something went wrong" });
   }
-  }
-  
+}
