@@ -12,6 +12,18 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
+async function verifyChannelMembership(chatId, userTelegramId) {
+  const url = `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${encodeURIComponent(chatId)}&user_id=${userTelegramId}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  // If the Telegram API call itself fails (e.g. bot isn't admin in the
+  // channel, or the channel ID is misconfigured), don't lock every user
+  // out over an admin mistake — only block on a confirmed "not a member".
+  if (!data.ok) return true;
+  const validStatuses = ["member", "administrator", "creator"];
+  return validStatuses.includes(data.result.status);
+}
+
 async function supabaseFetch(path, options = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...options,
@@ -67,6 +79,18 @@ export default async function handler(req, res) {
     }
     const telegramId = String(tgUser.id);
 
+    // 0. Check the channel-join gate before doing anything else
+    const config = (await supabaseFetch(`admin_config?id=eq.1&select=*`))[0];
+    if (config.require_channel_join && config.official_channel_id) {
+      const isMember = await verifyChannelMembership(config.official_channel_id, telegramId);
+      if (!isMember) {
+        return res.status(403).json({
+          error: "not_joined",
+          channelLink: config.official_channel_link || null,
+        });
+      }
+    }
+
     // 1. Find or create the user
     let users = await supabaseFetch(`app_users?telegram_id=eq.${telegramId}&select=*`);
     let user;
@@ -114,9 +138,8 @@ export default async function handler(req, res) {
       }
     }
 
-    // 3. Pull everything the frontend needs in one go
-    const [config, tiers, tasks, completions, referrals, withdrawals] = await Promise.all([
-      supabaseFetch(`admin_config?id=eq.1&select=*`).then(r => r[0]),
+    // 3. Pull everything else the frontend needs in one go
+    const [tiers, tasks, completions, referrals, withdrawals] = await Promise.all([
       supabaseFetch(`referral_tiers?select=*&order=min_ref.asc`),
       supabaseFetch(`tasks?active=eq.true&select=*`),
       supabaseFetch(`task_completions?user_id=eq.${user.id}&select=task_id`),
@@ -137,4 +160,5 @@ export default async function handler(req, res) {
     console.error(err);
     return res.status(500).json({ error: "Something went wrong" });
   }
-}
+      }
+      
