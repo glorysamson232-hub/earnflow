@@ -9,7 +9,7 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const PAYMENT_CHANNEL_ID = process.env.PAYMENT_CHANNEL_ID; // e.g. @your_payments_channel or -100xxxxxxxxxx
 
-async function notifyPaymentChannel(withdrawal, telegramId) {
+async function notifyPaymentChannel(withdrawal, userLabel) {
   if (!PAYMENT_CHANNEL_ID || !BOT_TOKEN) return;
   try {
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -21,7 +21,7 @@ async function notifyPaymentChannel(withdrawal, telegramId) {
         text:
           `💸 <b>New withdrawal request</b>\n` +
           `Bot: @EARNFLOW9BOT\n` +
-          `User: <code>${telegramId}</code>\n` +
+          `User: ${userLabel}\n` +
           `Method: ${withdrawal.method}\n` +
           `Amount: ${withdrawal.points.toLocaleString()} pts ($${withdrawal.usd_value.toFixed(3)})\n` +
           `Fee: $${withdrawal.fee.toFixed(3)} · Net: $${withdrawal.net_amount.toFixed(3)}\n` +
@@ -131,6 +131,19 @@ export default async function handler(req, res) {
         });
       }
     }
+    if (config.require_all_tasks_for_withdrawal) {
+      const [activeTasks, completions] = await Promise.all([
+        supabaseFetch(`tasks?active=eq.true&select=id`),
+        supabaseFetch(`task_completions?user_id=eq.${user.id}&select=task_id`),
+      ]);
+      const completedIds = new Set(completions.map(c => c.task_id));
+      const remaining = activeTasks.filter(t => !completedIds.has(t.id)).length;
+      if (remaining > 0) {
+        return res.status(400).json({
+          error: `Complete all available tasks before withdrawing (${remaining} remaining)`,
+        });
+      }
+    }
 
     // 3. Daily limit — count today's withdrawals for this user
     const startOfDay = new Date();
@@ -173,7 +186,8 @@ export default async function handler(req, res) {
       }),
     });
 
-    await notifyPaymentChannel(withdrawal[0], telegramId);
+    const userLabel = user.telegram_username ? `@${user.telegram_username} (${telegramId})` : `ID ${telegramId}`;
+    await notifyPaymentChannel(withdrawal[0], userLabel);
 
     return res.status(200).json({
       success: true,
@@ -186,4 +200,5 @@ export default async function handler(req, res) {
     console.error(err);
     return res.status(500).json({ error: "Something went wrong" });
   }
-}
+      }
+      
