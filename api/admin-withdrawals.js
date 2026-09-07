@@ -9,6 +9,20 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+
+async function notifyUser(telegramId, text) {
+  if (!BOT_TOKEN) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: telegramId, parse_mode: "HTML", text }),
+    });
+  } catch (e) {
+    console.error("Failed to notify user:", e);
+  }
+}
 
 async function supabaseFetch(path, options = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -77,6 +91,12 @@ export default async function handler(req, res) {
             total_withdrawn: user.total_withdrawn + withdrawal.points,
           }),
         });
+        await notifyUser(
+          user.telegram_id,
+          `✅ <b>Withdrawal approved</b>\n\n` +
+          `${withdrawal.points.toLocaleString()} pts ($${Number(withdrawal.net_amount).toFixed(3)} net) has been sent to your ${withdrawal.method} wallet.\n` +
+          `<code>${withdrawal.wallet_address}</code>`
+        );
       } else {
         // Reject: refund the reserved points back to the user's spendable balance
         await supabaseFetch(`withdrawals?id=eq.${withdrawalId}`, {
@@ -90,6 +110,11 @@ export default async function handler(req, res) {
             points_balance: user.points_balance + withdrawal.points,
           }),
         });
+        await notifyUser(
+          user.telegram_id,
+          `❌ <b>Withdrawal rejected</b>\n\n` +
+          `Your request for ${withdrawal.points.toLocaleString()} pts via ${withdrawal.method} was rejected and the points have been refunded to your balance.`
+        );
       }
 
       return res.status(200).json({ success: true });
@@ -100,5 +125,4 @@ export default async function handler(req, res) {
     console.error(err);
     return res.status(500).json({ error: "Something went wrong" });
   }
-    }
-      
+                                         }
