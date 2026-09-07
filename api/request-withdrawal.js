@@ -121,6 +121,16 @@ export default async function handler(req, res) {
     if (requestedPoints > user.points_balance) {
       return res.status(400).json({ error: "Insufficient balance" });
     }
+    if (config.min_referrals_for_withdrawal > 0) {
+      const qualifiedReferrals = await supabaseFetch(
+        `referrals?referrer_id=eq.${user.id}&qualified=eq.true&select=id`
+      );
+      if (qualifiedReferrals.length < config.min_referrals_for_withdrawal) {
+        return res.status(400).json({
+          error: `You need ${config.min_referrals_for_withdrawal} qualified referrals to withdraw (you have ${qualifiedReferrals.length})`,
+        });
+      }
+    }
 
     // 3. Daily limit — count today's withdrawals for this user
     const startOfDay = new Date();
