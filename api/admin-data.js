@@ -66,6 +66,7 @@ export default async function handler(req, res) {
             method_usdt_enabled: config.methodUSDT,
             method_ton_enabled: config.methodTON,
             min_referrals_for_withdrawal: config.minReferralsForWithdrawal,
+            require_all_tasks_for_withdrawal: config.requireAllTasksForWithdrawal,
           }),
         });
       }
