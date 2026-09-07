@@ -6,6 +6,32 @@
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const PAYMENT_CHANNEL_ID = process.env.PAYMENT_CHANNEL_ID; // e.g. @your_payments_channel or -100xxxxxxxxxx
+
+async function notifyPaymentChannel(withdrawal, telegramId) {
+  if (!PAYMENT_CHANNEL_ID || !BOT_TOKEN) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: PAYMENT_CHANNEL_ID,
+        parse_mode: "HTML",
+        text:
+          `💸 <b>New withdrawal request</b>\n` +
+          `User: <code>${telegramId}</code>\n` +
+          `Method: ${withdrawal.method}\n` +
+          `Amount: ${withdrawal.points.toLocaleString()} pts ($${withdrawal.usd_value.toFixed(3)})\n` +
+          `Fee: $${withdrawal.fee.toFixed(3)} · Net: $${withdrawal.net_amount.toFixed(3)}\n` +
+          `Wallet: <code>${withdrawal.wallet_address}</code>\n` +
+          `Status: ${withdrawal.status}`,
+      }),
+    });
+  } catch (e) {
+    console.error("Failed to notify payment channel:", e);
+  }
+}
 
 async function supabaseFetch(path, options = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -135,6 +161,8 @@ export default async function handler(req, res) {
         [method === "USDT" ? "wallet_usdt" : "wallet_ton"]: walletAddress,
       }),
     });
+
+    await notifyPaymentChannel(withdrawal[0], telegramId);
 
     return res.status(200).json({
       success: true,
