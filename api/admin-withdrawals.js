@@ -111,10 +111,11 @@ export default async function handler(req, res) {
           `${withdrawal.points.toLocaleString()} pts ($${Number(withdrawal.net_amount).toFixed(3)} net) has been sent to your ${withdrawal.method} wallet.\n` +
           `<code>${withdrawal.wallet_address}</code>`
         );
+        const userLabel = user.telegram_username ? `@${user.telegram_username} (${user.telegram_id})` : `ID ${user.telegram_id}`;
         await notifyPaymentChannel(
           `✅ <b>Withdrawal approved & paid</b>\n` +
           `Bot: @EARNFLOW9BOT\n` +
-          `User: <code>${user.telegram_id}</code>\n` +
+          `User: ${userLabel}\n` +
           `${withdrawal.method} · ${withdrawal.points.toLocaleString()} pts · net $${Number(withdrawal.net_amount).toFixed(3)}\n` +
           `Wallet: <code>${withdrawal.wallet_address}</code>`
         );
@@ -146,4 +147,4 @@ export default async function handler(req, res) {
     console.error(err);
     return res.status(500).json({ error: "Something went wrong" });
   }
-}
+    }
