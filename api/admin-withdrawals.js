@@ -10,6 +10,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const PAYMENT_CHANNEL_ID = process.env.PAYMENT_CHANNEL_ID;
 
 async function notifyUser(telegramId, text) {
   if (!BOT_TOKEN) return;
@@ -21,6 +22,19 @@ async function notifyUser(telegramId, text) {
     });
   } catch (e) {
     console.error("Failed to notify user:", e);
+  }
+}
+
+async function notifyPaymentChannel(text) {
+  if (!BOT_TOKEN || !PAYMENT_CHANNEL_ID) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: PAYMENT_CHANNEL_ID, parse_mode: "HTML", text }),
+    });
+  } catch (e) {
+    console.error("Failed to notify payment channel:", e);
   }
 }
 
@@ -93,9 +107,16 @@ export default async function handler(req, res) {
         });
         await notifyUser(
           user.telegram_id,
-          `✅ <b>Withdrawal approved</b>\n\n` +
+          `✅ <b>Withdrawal approved</b> — @EARNFLOW9BOT\n\n` +
           `${withdrawal.points.toLocaleString()} pts ($${Number(withdrawal.net_amount).toFixed(3)} net) has been sent to your ${withdrawal.method} wallet.\n` +
           `<code>${withdrawal.wallet_address}</code>`
+        );
+        await notifyPaymentChannel(
+          `✅ <b>Withdrawal approved & paid</b>\n` +
+          `Bot: @EARNFLOW9BOT\n` +
+          `User: <code>${user.telegram_id}</code>\n` +
+          `${withdrawal.method} · ${withdrawal.points.toLocaleString()} pts · net $${Number(withdrawal.net_amount).toFixed(3)}\n` +
+          `Wallet: <code>${withdrawal.wallet_address}</code>`
         );
       } else {
         // Reject: refund the reserved points back to the user's spendable balance
@@ -112,7 +133,7 @@ export default async function handler(req, res) {
         });
         await notifyUser(
           user.telegram_id,
-          `❌ <b>Withdrawal rejected</b>\n\n` +
+          `❌ <b>Withdrawal rejected</b> — @EARNFLOW9BOT\n\n` +
           `Your request for ${withdrawal.points.toLocaleString()} pts via ${withdrawal.method} was rejected and the points have been refunded to your balance.`
         );
       }
@@ -125,4 +146,4 @@ export default async function handler(req, res) {
     console.error(err);
     return res.status(500).json({ error: "Something went wrong" });
   }
-                                         }
+}
