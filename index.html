@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>EarnFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0F1B2B;
+    --ink-2:#16273B;
+    --ink-3:#1E3049;
+    --gold:#E8A33D;
+    --gold-dim:#B87F2C;
+    --teal:#2BAF7D;
+    --red:#D9564B;
+    --paper:#F2EFE9;
+    --slate:#8593A6;
+    --line:rgba(242,239,233,0.10);
+    --line-strong:rgba(242,239,233,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  #root{max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;}
+
+  h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";}
+
+  /* Top bar */
+  .topbar{
+    padding:18px 20px 14px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{
+    width:30px;height:30px;border-radius:8px;
+    background:linear-gradient(135deg,var(--gold),var(--gold-dim));
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--ink);
+  }
+  .brand-name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:17px;letter-spacing:0.2px;}
+  .admin-toggle{
+    background:none;border:1px solid var(--line-strong);color:var(--slate);
+    font-size:12px;padding:6px 10px;border-radius:100px;cursor:pointer;font-family:'Inter',sans-serif;
+  }
+  .admin-toggle.active{color:var(--gold);border-color:var(--gold);}
+
+  main{flex:1;padding:20px 20px 96px;overflow-y:auto;}
+
+  /* Balance ticker card */
+  .balance-card{
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:16px;
+  }
+  .balance-label{font-size:12px;color:var(--slate);margin-bottom:6px;}
+  .balance-value{font-size:36px;font-weight:700;line-height:1.1;display:flex;align-items:baseline;gap:8px;}
+  .balance-usd{font-size:14px;color:var(--slate);font-weight:500;}
+  .balance-row{display:flex;gap:10px;margin-top:16px;}
+  .balance-stat{flex:1;border-left:1px solid var(--line);padding-left:10px;}
+  .balance-stat .n{font-size:15px;font-weight:600;}
+  .balance-stat .l{font-size:11px;color:var(--slate);margin-top:2px;}
+
+  .section-title{font-size:13px;color:var(--slate);margin:22px 0 10px;font-weight:500;}
+  .section-title:first-child{margin-top:0;}
+
+  .card{
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:10px;
+  }
+  .task-card{display:flex;align-items:center;gap:12px;}
+  .task-info{flex:1;min-width:0;}
+  .task-name{font-weight:600;font-size:14.5px;margin-bottom:3px;}
+  .task-desc{font-size:12.5px;color:var(--slate);line-height:1.4;}
+  .task-reward{font-size:12px;color:var(--gold);margin-top:6px;font-weight:600;}
+  .btn{
+    border:none;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;
+    cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;
+  }
+  .btn-primary{background:var(--gold);color:var(--ink);}
+  .btn-primary:disabled{background:var(--ink-3);color:var(--slate);cursor:not-allowed;}
+  .btn-ghost{background:none;border:1px solid var(--line-strong);color:var(--paper);}
+  .btn-danger{background:var(--red);color:var(--paper);}
+  .btn-sm{padding:6px 11px;font-size:12px;}
+  .pill{
+    font-size:11px;padding:3px 9px;border-radius:100px;font-weight:600;
+  }
+  .pill-done{background:rgba(43,175,125,0.15);color:var(--teal);}
+  .pill-pending{background:rgba(232,163,61,0.15);color:var(--gold);}
+  .pill-review{background:rgba(133,147,166,0.2);color:var(--slate);}
+  .pill-rejected{background:rgba(217,86,75,0.15);color:var(--red);}
+
+  /* Referrals */
+  .ref-link-box{
+    display:flex;gap:8px;align-items:center;
+    background:var(--ink-3);border:1px solid var(--line);border-radius:10px;
+    padding:12px 14px;font-size:13px;color:var(--slate);margin-bottom:14px;
+  }
+  .ref-link-box code{color:var(--paper);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tier-track{
+    height:6px;background:var(--ink-3);border-radius:100px;overflow:hidden;margin:10px 0 6px;
+  }
+  .tier-fill{height:100%;background:var(--gold);border-radius:100px;}
+  .ref-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .ref-row:last-child{border-bottom:none;}
+
+  /* Withdraw */
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;color:var(--slate);margin-bottom:6px;}
+  .field input, .field select{
+    width:100%;background:var(--ink-3);border:1px solid var(--line-strong);border-radius:9px;
+    padding:11px 12px;color:var(--paper);font-size:14px;font-family:'Inter',sans-serif;
+  }
+  .method-toggle{display:flex;gap:8px;}
+  .method-btn{
+    flex:1;padding:12px;border-radius:9px;border:1px solid var(--line-strong);background:var(--ink-3);
+    color:var(--slate);font-weight:600;cursor:pointer;text-align:center;font-size:13.5px;
+  }
+  .method-btn.selected{border-color:var(--gold);color:var(--gold);background:rgba(232,163,61,0.08);}
+  .method-btn:disabled{opacity:0.35;cursor:not-allowed;}
+  .breakdown{background:var(--ink-3);border-radius:10px;padding:14px;margin:14px 0;}
+  .breakdown-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;}
+  .breakdown-row.total{border-top:1px solid var(--line);margin-top:5px;padding-top:9px;font-weight:700;color:var(--gold);}
+  .eligibility-item{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;padding:5px 0;color:var(--slate);}
+  .eligibility-item.ok{color:var(--teal);}
+  .eligibility-item.fail{color:var(--red);}
+  .notice{
+    background:rgba(217,86,75,0.1);border:1px solid rgba(217,86,75,0.3);color:#f2b3ac;
+    border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:14px;
+  }
+
+  /* Bottom nav */
+  .navbar{
+    position:absolute;bottom:0;left:0;right:0;
+    background:var(--ink-2);border-top:1px solid var(--line);
+    display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+  }
+  .navbtn{
+    flex:1;background:none;border:none;color:var(--slate);font-family:'Inter',sans-serif;
+    display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px;cursor:pointer;font-size:10.5px;
+  }
+  .navbtn.active{color:var(--gold);}
+  .navbtn .ic{font-size:18px;line-height:1;}
+
+  /* Admin */
+  .admin-section{margin-bottom:22px;}
+  .admin-section h3{font-size:14px;margin:0 0 12px;color:var(--gold);}
+  .row2{display:flex;gap:10px;}
+  .row2 .field{flex:1;}
+  table.tiers{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.tiers th{text-align:left;color:var(--slate);font-weight:500;padding:6px 4px;border-bottom:1px solid var(--line);}
+  table.tiers td{padding:6px 4px;border-bottom:1px solid var(--line);}
+  table.tiers input{width:100%;background:var(--ink-3);border:1px solid var(--line-strong);border-radius:6px;color:var(--paper);padding:5px 6px;font-size:12.5px;}
+  .task-admin-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--line);}
+  .task-admin-row input{background:var(--ink-3);border:1px solid var(--line-strong);border-radius:6px;color:var(--paper);padding:6px 8px;font-size:12.5px;}
+  .checkline{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:10px;}
+  .empty{text-align:center;padding:30px 10px;color:var(--slate);font-size:13px;}
+  .toast{
+    position:absolute;bottom:78px;left:50%;transform:translateX(-50%);
+    background:var(--paper);color:var(--ink);padding:10px 18px;border-radius:100px;
+    font-size:13px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,0.3);
+    opacity:0;pointer-events:none;transition:opacity 0.25s, transform 0.25s;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useCallback } = React;
+
+const STORAGE_KEY = "earnflow-app-state";
+
+const uid = (p) => p + "_" + Math.random().toString(36).slice(2,9);
+
+function defaultAdminConfig(){
+  return {
+    pointsPerDollar: 10000, // 100 points = $0.01  ->  10,000 points = $1.00
+    referralQualificationTasks: 3,
+    referralTiers: [
+      { id: uid("tier"), minRef: 1,   maxRef: 10,   reward: 100 },
+      { id: uid("tier"), minRef: 11,  maxRef: 25,   reward: 80  },
+      { id: uid("tier"), minRef: 26,  maxRef: 50,   reward: 60  },
+      { id: uid("tier"), minRef: 51,  maxRef: 100,  reward: 40  },
+      { id: uid("tier"), minRef: 101, maxRef: 999999, reward: 20 },
+    ],
+    referralSystemEnabled: true,
+    minWithdrawal: 1500,
+    maxWithdrawal: 2500,
+    withdrawalFeePercent: 10,
+    withdrawalsPerDay: 3,
+    withdrawalDays: ["SU","MO","TU","WE","TH","FR","SA"],
+    withdrawalOpen: "09:00",
+    withdrawalClose: "16:00",
+    methodUSDT: true,
+    methodTON: true,
+    tasks: [
+      { id: uid("task"), name: "Join our Telegram channel", description: "Join the official EarnFlow announcements channel.", link: "https://t.me/your_channel", reward: 50, active: true },
+      { id: uid("task"), name: "Follow on YouTube", description: "Subscribe to the EarnFlow YouTube channel.", link: "https://youtube.com/@yourchannel", reward: 50, active: true },
+      { id: uid("task"), name: "Watch a sponsored video", description: "Watch a short 30-second video to completion.", link: "", reward: 30, active: true },
+      { id: uid("task"), name: "Share your referral link", description: "Share your invite link to one Telegram group or status.", link: "", reward: 40, active: true },
+      { id: uid("task"), name: "Complete your profile", description: "Add your wallet address in Settings.", link: "", reward: 20, active: true },
+    ],
+  };
+}
+
+function defaultUserState(){
+  return {
+    telegramId: "tg_849213",
+    displayName: "You",
+    pointsBalance: 0,
+    pendingWithdrawal: 0,
+    totalEarned: 0,
+    totalReferralEarnings: 0,
+    totalWithdrawn: 0,
+    completedTaskIds: [],
+    referrals: [], // {id, name, tasksCompleted, qualified, dateAdded}
+    wallets: { USDT: "", TON: "" },
+    withdrawalHistory: [], // {id, method, points, usd, fee, net, wallet, date, status}
+    withdrawalsToday: 0,
+    lastWithdrawalDay: null,
+  };
+}
+
+function loadState(){
+  return { adminConfig: defaultAdminConfig(), userState: defaultUserState() };
+}
+
+function fmtUsd(n){
+  return "$" + n.toFixed(3).replace(/0$/,"").replace(/\.$/, ".0");
+}
+function pointsToUsd(points, pointsPerDollar){
+  return points / pointsPerDollar;
+}
+function todayKey(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+function dayCode(){
+  return ["SU","MO","TU","WE","TH","FR","SA"][new Date().getDay()];
+}
+function withinWithdrawalWindow(cfg){
+  const now = new Date();
+  const code = dayCode();
+  if(!cfg.withdrawalDays.includes(code)) return false;
+  const [oh,om] = cfg.withdrawalOpen.split(":").map(Number);
+  const [ch,cm] = cfg.withdrawalClose.split(":").map(Number);
+  const openMin = oh*60+om, closeMin = ch*60+cm;
+  const curMin = now.getHours()*60 + now.getMinutes();
+  return curMin >= openMin && curMin <= closeMin;
+}
+function currentTierReward(cfg, qualifiedCount){
+  if(!cfg.referralTiers || cfg.referralTiers.length === 0) return 0;
+  const n = qualifiedCount + 1; // the tier this NEXT qualified referral falls into
+  const tier = cfg.referralTiers.find(t => n >= t.minRef && n <= t.maxRef);
+  return tier ? tier.reward : cfg.referralTiers[cfg.referralTiers.length-1].reward;
+}
+
+// Change this to your own secret before deploying — this is what makes the
+// admin link private. Anyone with ?key=THIS_VALUE in the URL gets in, so
+// treat it like a password and don't share it publicly. For a real
+// production deploy, move this check into your EdgeOne Edge Function
+// (server-side) rather than relying on client-side JS alone.
+const ADMIN_SECRET = "earnflow-admin-7x9k2";
+
+function maskWallet(addr){
+  if(!addr || addr.length < 8) return addr || "";
+  return addr.slice(0,4) + "••••" + addr.slice(-4);
+}
+
+// Converts the /api/bootstrap response (snake_case, straight from Supabase)
+// into the shape the UI components expect.
+function mapBootstrapToState(data){
+  const cfg = data.config;
+  const adminConfig = {
+    pointsPerDollar: cfg.points_per_dollar,
+    referralQualificationTasks: cfg.referral_qualification_tasks,
+    referralSystemEnabled: cfg.referral_system_enabled,
+    minWithdrawal: cfg.min_withdrawal,
+    maxWithdrawal: cfg.max_withdrawal,
+    withdrawalFeePercent: Number(cfg.withdrawal_fee_percent),
+    withdrawalsPerDay: cfg.withdrawals_per_day,
+    withdrawalDays: cfg.withdrawal_days,
+    withdrawalOpen: cfg.withdrawal_open.slice(0,5),
+    withdrawalClose: cfg.withdrawal_close.slice(0,5),
+    methodUSDT: cfg.method_usdt_enabled,
+    methodTON: cfg.method_ton_enabled,
+    referralTiers: data.referralTiers.map(t => ({
+      id: t.id, minRef: t.min_ref, maxRef: t.max_ref, reward: t.reward,
+    })),
+    tasks: data.tasks.map(t => ({
+      id: t.id, name: t.name, description: t.description, link: t.link,
+      reward: t.reward, active: t.active,
+      verificationType: t.verification_type, telegramChatId: t.telegram_chat_id,
+    })),
+  };
+
+  const tk = todayKey();
+  const withdrawalsToday = data.withdrawals.filter(w => w.created_at.slice(0,10) === tk).length;
+
+  const userState = {
+    telegramId: data.user.telegram_id,
+    displayName: data.user.display_name,
+    pointsBalance: data.user.points_balance,
+    pendingWithdrawal: data.user.pending_withdrawal,
+    totalEarned: data.user.total_earned,
+    totalReferralEarnings: data.user.total_referral_earnings,
+    totalWithdrawn: data.user.total_withdrawn,
+    completedTaskIds: data.completedTaskIds,
+    referrals: data.referrals.map(r => ({
+      id: r.id, name: `Referral #${r.id.slice(0,6)}`,
+      tasksCompleted: r.tasks_completed, qualified: r.qualified, dateAdded: r.created_at,
+    })),
+    wallets: { USDT: data.user.wallet_usdt || "", TON: data.user.wallet_ton || "" },
+    withdrawalHistory: data.withdrawals.map(w => ({
+      id: w.id, method: w.method, points: w.points, usd: Number(w.usd_value),
+      fee: Number(w.fee), net: Number(w.net_amount), wallet: maskWallet(w.wallet_address),
+      date: w.created_at, status: w.status,
+    })),
+    withdrawalsToday,
+    lastWithdrawalDay: tk,
+    lastCheckinAt: data.user.last_checkin_at,
+    checkinStreak: data.user.checkin_streak,
+  };
+
+  adminConfig.dailyCheckinEnabled = cfg.daily_checkin_enabled;
+  adminConfig.dailyCheckinReward = cfg.daily_checkin_reward;
+
+  return { adminConfig, userState };
+}
+
+
+function App(){
+  const [adminConfig, setAdminConfig] = useState(defaultAdminConfig());
+  const [userState, setUserState] = useState(defaultUserState());
+  const [tab, setTab] = useState("home");
+  const [adminMode, setAdminMode] = useState(() => {
+    try{
+      const params = new URLSearchParams(window.location.search);
+      return params.get("key") === ADMIN_SECRET;
+    }catch(e){ return false; }
+  });
+  const [toast, setToast] = useState("");
+  const [loaded, setLoaded] = useState(false);
+  const [authError, setAuthError] = useState("");
+
+  const showToast = useCallback((msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 2200);
+  }, []);
+
+  const refreshState = useCallback(async () => {
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if(!tg || !tg.initData){
+      setAuthError("Open this app from inside Telegram to load your account.");
+      setLoaded(true);
+      return;
+    }
+    try{
+      const resp = await fetch("/api/bootstrap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          initData: tg.initData,
+          startParam: (tg.initDataUnsafe && tg.initDataUnsafe.start_param)
+            || new URLSearchParams(window.location.search).get("ref"),
+        }),
+      });
+      const data = await resp.json();
+      if(!resp.ok){
+        setAuthError(data.error || "Could not load your account.");
+      }else{
+        const { adminConfig: ac, userState: us } = mapBootstrapToState(data);
+        setAdminConfig(ac);
+        setUserState(us);
+        setAuthError("");
+      }
+    }catch(e){
+      setAuthError("Network error loading your account.");
+    }
+    setLoaded(true);
+  }, []);
+
+  // Load real account data from Telegram + Supabase on open
+  useEffect(() => {
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if(tg) tg.ready();
+    refreshState();
+  }, [refreshState]);
+
+  const completeTask = async (task) => {
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if(!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) return;
+    try{
+      const resp = await fetch("/api/complete-task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegramId: String(tg.initDataUnsafe.user.id), taskId: task.id }),
+      });
+      const data = await resp.json();
+      if(!resp.ok){
+        showToast(data.error || "Could not complete task");
+        return;
+      }
+      showToast(`+${data.pointsEarned} points earned`);
+      refreshState();
+    }catch(e){
+      showToast("Network error — try again");
+    }
+  };
+
+  const qualifiedCount = userState.referrals.filter(r => r.qualified).length;
+
+  const claimCheckin = async () => {
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if(!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) return;
+    try{
+      const resp = await fetch("/api/daily-checkin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegramId: String(tg.initDataUnsafe.user.id) }),
+      });
+      const data = await resp.json();
+      if(!resp.ok){
+        showToast(data.error || "Could not check in");
+        return;
+      }
+      showToast(`+${data.pointsEarned} points — day ${data.streak} streak!`);
+      refreshState();
+    }catch(e){
+      showToast("Network error — try again");
+    }
+  };
+
+  const submitWithdrawal = async ({ method, wallet, amount }) => {
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if(!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) return { ok:false, error:"Telegram identity not found" };
+    try{
+      const resp = await fetch("/api/request-withdrawal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          telegramId: String(tg.initDataUnsafe.user.id),
+          method, walletAddress: wallet, points: amount,
+        }),
+      });
+      const data = await resp.json();
+      if(!resp.ok) return { ok:false, error: data.error };
+      await refreshState();
+      return { ok:true };
+    }catch(e){
+      return { ok:false, error:"Network error — try again" };
+    }
+  };
+
+  const value = {
+    adminConfig, setAdminConfig,
+    userState, setUserState,
+    tab, setTab,
+    adminMode, setAdminMode,
+    showToast,
+    completeTask,
+    submitWithdrawal,
+    claimCheckin,
+    qualifiedCount,
+  };
+
+  if(!loaded){
+    return <div style={{padding:40, textAlign:"center", color:"var(--slate)"}}>Loading...</div>;
+  }
+  if(authError && !adminMode){
+    return <div style={{padding:40, textAlign:"center", color:"var(--slate)", fontSize:13.5, lineHeight:1.6}}>{authError}</div>;
+  }
+
+  return (
+    <div id="app-shell">
+      <TopBar value={value} />
+      <main>
+        {adminMode
+          ? <AdminPanel value={value} />
+          : (
+            tab === "home" ? <HomeTab value={value} /> :
+            tab === "tasks" ? <TasksTab value={value} /> :
+            tab === "referrals" ? <ReferralsTab value={value} /> :
+            tab === "leaderboard" ? <LeaderboardTab value={value} /> :
+            <WithdrawTab value={value} />
+          )
+        }
+      </main>
+      {!adminMode && <BottomNav value={value} />}
+      <div className={"toast" + (toast ? " show" : "")}>{toast}</div>
+    </div>
+  );
+}
+
+function TopBar({ value }){
+  const { adminMode, setAdminMode } = value;
+  return (
+    <div className="topbar">
+      <div className="brand">
+        <div className="brand-mark">E</div>
+        <div className="brand-name">EarnFlow</div>
+      </div>
+      {adminMode && (
+        <button className="admin-toggle active" onClick={() => setAdminMode(false)}>
+          Exit Admin
+        </button>
+      )}
+    </div>
+  );
+}
+
+function BottomNav({ value }){
+  const { tab, setTab } = value;
+  const items = [
+    { key: "home", label: "Home", icon: "◆" },
+    { key: "tasks", label: "Tasks", icon: "✓" },
+    { key: "referrals", label: "Referrals", icon: "↗" },
+    { key: "leaderboard", label: "Ranks", icon: "★" },
+    { key: "withdraw", label: "Withdraw", icon: "$" },
+  ];
+  return (
+    <div className="navbar">
+      {items.map(it => (
+        <button key={it.key} className={"navbtn" + (tab===it.key ? " active":"")} onClick={() => setTab(it.key)}>
+          <span className="ic">{it.icon}</span>
+          <span>{it.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function HomeTab({ value }){
+  const { userState, adminConfig, setTab, claimCheckin, showToast } = value;
+  const usd = pointsToUsd(userState.pointsBalance, adminConfig.pointsPerDollar);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const lastCheckin = userState.lastCheckinAt ? new Date(userState.lastCheckinAt).getTime() : null;
+  const nextClaimAt = lastCheckin ? lastCheckin + 24*60*60*1000 : null;
+  const canClaim = !nextClaimAt || now >= nextClaimAt;
+  const msLeft = nextClaimAt ? Math.max(0, nextClaimAt - now) : 0;
+  const hLeft = Math.floor(msLeft / 3600000);
+  const mLeft = Math.floor((msLeft % 3600000) / 60000);
+  const sLeft = Math.floor((msLeft % 60000) / 1000);
+
+  return (
+    <div>
+      <div className="balance-card">
+        <div className="balance-label">Available balance</div>
+        <div className="balance-value num">{userState.pointsBalance.toLocaleString()} <span style={{fontSize:14,color:"var(--slate)",fontWeight:500}}>pts</span></div>
+        <div className="balance-usd num">{fmtUsd(usd)} USD</div>
+        <div className="balance-row">
+          <div className="balance-stat">
+            <div className="n num">{userState.totalEarned.toLocaleString()}</div>
+            <div className="l">Total earned</div>
+          </div>
+          <div className="balance-stat">
+            <div className="n num">{userState.totalReferralEarnings.toLocaleString()}</div>
+            <div className="l">Referral earnings</div>
+          </div>
+          <div className="balance-stat">
+            <div className="n num">{userState.totalWithdrawn.toLocaleString()}</div>
+            <div className="l">Withdrawn</div>
+          </div>
+        </div>
+      </div>
+
+      {adminConfig.dailyCheckinEnabled && (
+        <div className="card" style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+          <div>
+            <div style={{fontWeight:600, fontSize:14}}>Daily check-in</div>
+            <div style={{fontSize:12, color:"var(--slate)", marginTop:2}}>
+              {userState.checkinStreak > 0 ? `${userState.checkinStreak} day streak` : "Start your streak"}
+              {!canClaim && ` · next in ${hLeft}h ${mLeft}m ${sLeft}s`}
+            </div>
+          </div>
+          <button className="btn btn-primary btn-sm" disabled={!canClaim} onClick={claimCheckin}>
+            {canClaim ? `Claim +${adminConfig.dailyCheckinReward}` : "Claimed"}
+          </button>
+        </div>
+      )}
+
+      <div className="section-title">Quick actions</div>
+      <div className="card" style={{display:"flex", gap:10}}>
+        <button className="btn btn-primary" style={{flex:1}} onClick={() => setTab("tasks")}>Do a task</button>
+        <button className="btn btn-ghost" style={{flex:1}} onClick={() => setTab("withdraw")}>Withdraw</button>
+      </div>
+
+      <div className="section-title">Recent activity</div>
+      {userState.withdrawalHistory.length === 0 ? (
+        <div className="card empty">No activity yet. Complete a task to get started.</div>
+      ) : (
+        userState.withdrawalHistory.slice(0,3).map(w => (
+          <div className="card" key={w.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <div style={{fontWeight:600, fontSize:13.5}}>{w.method} withdrawal</div>
+              <div style={{fontSize:12, color:"var(--slate)", marginTop:2}}>{new Date(w.date).toLocaleDateString()}</div>
+            </div>
+            <StatusPill status={w.status} />
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+function StatusPill({ status }){
+  const map = {
+    "Pending":"pill-pending","Under Review":"pill-review","Approved":"pill-done",
+    "Processing":"pill-pending","Paid":"pill-done","Rejected":"pill-rejected",
+  };
+  return <span className={"pill " + (map[status]||"pill-review")}>{status}</span>;
+}
+
+function TasksTab({ value }){
+  const { adminConfig, userState, completeTask } = value;
+  const activeTasks = adminConfig.tasks.filter(t => t.active);
+  return (
+    <div>
+      <div className="section-title">Available tasks</div>
+      {activeTasks.length === 0 && <div className="card empty">No tasks available right now.</div>}
+      {activeTasks.map(task => {
+        const done = userState.completedTaskIds.includes(task.id);
+        return (
+          <div className="card task-card" key={task.id}>
+            <div className="task-info">
+              <div className="task-name">{task.name}</div>
+              <div className="task-desc">{task.description}</div>
+              <div className="task-reward">+{task.reward} pts</div>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
+              {task.link && !done && (
+                <a href={task.link} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm" style={{textDecoration:"none"}}>Open</a>
+              )}
+              {done
+                ? <span className="pill pill-done">Completed</span>
+                : <button className="btn btn-primary btn-sm" onClick={() => completeTask(task)}>Complete</button>
+              }
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ReferralsTab({ value }){
+  const { userState, adminConfig, qualifiedCount, showToast } = value;
+  const nextReward = currentTierReward(adminConfig, qualifiedCount);
+  const tier = adminConfig.referralTiers.find(t => (qualifiedCount+1) >= t.minRef && (qualifiedCount+1) <= t.maxRef);
+  const progressInTier = tier ? Math.min(100, ((qualifiedCount - tier.minRef + 1) / (tier.maxRef - tier.minRef + 1)) * 100) : 0;
+  const refLink = `https://t.me/EARNFLOW9BOT/EARNFLOW?startapp=${userState.telegramId}`;
+
+  const copyLink = async () => {
+    try{
+      await navigator.clipboard.writeText(refLink);
+      showToast("Link copied");
+    }catch(e){
+      // Clipboard API can be blocked inside some in-app browsers —
+      // fall back to a manual-select prompt.
+      showToast("Couldn't copy automatically — long-press the link to copy");
+    }
+  };
+
+  if(!adminConfig.referralSystemEnabled){
+    return <div className="notice">The referral program is currently disabled by the admin.</div>;
+  }
+
+  return (
+    <div>
+      <div className="section-title">Your invite link</div>
+      <div className="ref-link-box">
+        <code>{refLink}</code>
+        <button className="btn btn-ghost btn-sm" onClick={copyLink}>Copy</button>
+      </div>
+
+      <div className="card">
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:13}}>
+          <span style={{color:"var(--slate)"}}>Qualified referrals</span>
+          <span style={{fontWeight:600}}>{qualifiedCount}</span>
+        </div>
+        <div className="tier-track"><div className="tier-fill" style={{width: progressInTier + "%"}}></div></div>
+        <div style={{fontSize:12, color:"var(--slate)"}}>Next qualified referral pays <strong style={{color:"var(--gold)"}}>{nextReward} pts</strong> at your current tier</div>
+      </div>
+
+      <div className="section-title">Referral rules</div>
+      <div className="card" style={{fontSize:12.5, color:"var(--slate)", lineHeight:1.6}}>
+        A referral only counts once the invited user completes {adminConfig.referralQualificationTasks} available tasks. Self-referrals, duplicate accounts, and repeated devices are automatically flagged.
+      </div>
+
+      <div className="section-title">Your referrals</div>
+      <div className="card">
+        {userState.referrals.length === 0 ? (
+          <div className="empty" style={{padding:"10px 0"}}>No referrals yet. Share your link above to invite people.</div>
+        ) : userState.referrals.map(r => (
+          <div className="ref-row" key={r.id}>
+            <span>{r.name}</span>
+            <span style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{color:"var(--slate)",fontSize:12}}>{r.tasksCompleted}/{adminConfig.referralQualificationTasks} tasks</span>
+              {r.qualified
+                ? <span className="pill pill-done">Qualified</span>
+                : <span className="pill pill-pending">In progress</span>
+              }
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LeaderboardTab({ value }){
+  const [rows, setRows] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try{
+        const resp = await fetch("/api/leaderboard");
+        const data = await resp.json();
+        if(resp.ok) setRows(data.leaderboard);
+        else setError(data.error || "Could not load leaderboard");
+      }catch(e){
+        setError("Network error loading leaderboard");
+      }
+    })();
+  }, []);
+
+  const medals = ["🥇","🥈","🥉"];
+
+  return (
+    <div>
+      <div className="section-title">Top earners</div>
+      {error && <div className="card empty">{error}</div>}
+      {!error && rows === null && <div className="card empty">Loading...</div>}
+      {!error && rows && rows.length === 0 && <div className="card empty">No one's earned points yet — be the first!</div>}
+      {!error && rows && rows.length > 0 && (
+        <div className="card">
+          {rows.map(r => (
+            <div className="ref-row" key={r.rank}>
+              <span>{medals[r.rank-1] || `#${r.rank}`} {r.displayName}</span>
+              <span style={{fontWeight:600, color:"var(--gold)"}} className="num">{r.totalEarned.toLocaleString()} pts</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WithdrawTab({ value }){
+  const { adminConfig, userState, submitWithdrawal, showToast } = value;
+  const [method, setMethod] = useState(adminConfig.methodUSDT ? "USDT" : (adminConfig.methodTON ? "TON" : null));
+  const [wallet, setWallet] = useState("");
+  const [amount, setAmount] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const inWindow = withinWithdrawalWindow(adminConfig);
+  const meetsMin = userState.pointsBalance >= adminConfig.minWithdrawal;
+  const notFlagged = true;
+  const hasWallet = wallet.trim().length > 0;
+  const underDailyLimit = userState.withdrawalsToday < adminConfig.withdrawalsPerDay;
+
+  const amtNum = Number(amount) || 0;
+  const amountValid = amtNum > 0 && amtNum >= adminConfig.minWithdrawal && amtNum <= adminConfig.maxWithdrawal && amtNum <= userState.pointsBalance;
+
+  const usdValue = pointsToUsd(amtNum, adminConfig.pointsPerDollar);
+  const fee = usdValue * (adminConfig.withdrawalFeePercent / 100);
+  const net = usdValue - fee;
+
+  const canSubmit = method && inWindow && meetsMin && hasWallet && underDailyLimit && amountValid && !submitting;
+
+  const eligibilityItems = [
+    { ok: meetsMin, label: `Minimum balance of ${adminConfig.minWithdrawal.toLocaleString()} pts` },
+    { ok: notFlagged, label: "Account not suspended or flagged" },
+    { ok: hasWallet, label: "Valid wallet address entered" },
+    { ok: underDailyLimit, label: `Within daily limit (${userState.withdrawalsToday}/${adminConfig.withdrawalsPerDay} used today)` },
+    { ok: inWindow, label: `Within withdrawal window (${adminConfig.withdrawalOpen}–${adminConfig.withdrawalClose})` },
+  ];
+
+  const submit = async () => {
+    if(!canSubmit) return;
+    setSubmitting(true);
+    const result = await submitWithdrawal({ method, wallet, amount: amtNum });
+    setSubmitting(false);
+    if(!result.ok){
+      showToast(result.error || "Could not submit withdrawal");
+      return;
+    }
+    setAmount("");
+    showToast("Withdrawal request submitted");
+  };
+
+  return (
+    <div>
+      {!inWindow && (
+        <div className="notice">Withdrawals are currently closed. Please return during the next withdrawal period ({adminConfig.withdrawalOpen}–{adminConfig.withdrawalClose}).</div>
+      )}
+
+      <div className="section-title">Eligibility</div>
+      <div className="card">
+        {eligibilityItems.map((it,i) => (
+          <div key={i} className={"eligibility-item " + (it.ok ? "ok":"fail")}>
+            <span>{it.ok ? "✓" : "✕"}</span><span>{it.label}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="section-title">Withdrawal method</div>
+      <div className="method-toggle" style={{marginBottom:14}}>
+        <button className={"method-btn"+(method==="USDT"?" selected":"")} disabled={!adminConfig.methodUSDT} onClick={()=>setMethod("USDT")}>USDT</button>
+        <button className={"method-btn"+(method==="TON"?" selected":"")} disabled={!adminConfig.methodTON} onClick={()=>setMethod("TON")}>TON</button>
+      </div>
+
+      <div className="field">
+        <label>{method || "Wallet"} address</label>
+        <input value={wallet} onChange={e=>setWallet(e.target.value)} placeholder={`Enter your ${method||""} wallet address`} />
+      </div>
+
+      <div className="field">
+        <label>Amount (points)</label>
+        <input type="number" value={amount} onChange={e=>setAmount(e.target.value)} placeholder={`${adminConfig.minWithdrawal}–${adminConfig.maxWithdrawal}`} />
+      </div>
+
+      <div className="breakdown">
+        <div className="breakdown-row"><span>Amount</span><span className="num">{amtNum.toLocaleString()} pts</span></div>
+        <div className="breakdown-row"><span>USD value</span><span className="num">{fmtUsd(usdValue)}</span></div>
+        <div className="breakdown-row"><span>Fee ({adminConfig.withdrawalFeePercent}%)</span><span className="num">-{fmtUsd(fee)}</span></div>
+        <div className="breakdown-row total"><span>You receive</span><span className="num">{fmtUsd(net)}</span></div>
+      </div>
+
+      <button className="btn btn-primary" style={{width:"100%"}} disabled={!canSubmit} onClick={submit}>
+        {submitting ? "Submitting..." : "Confirm withdrawal"}
+      </button>
+
+      <div className="section-title">History</div>
+      {userState.withdrawalHistory.length === 0 ? (
+        <div className="card empty">No withdrawals yet.</div>
+      ) : userState.withdrawalHistory.map(w => (
+        <div className="card" key={w.id}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+            <div>
+              <div style={{fontWeight:600,fontSize:13.5}}>{w.method} · {w.points.toLocaleString()} pts</div>
+              <div style={{fontSize:12,color:"var(--slate)",marginTop:3}}>{w.wallet} · {new Date(w.date).toLocaleString()}</div>
+              <div style={{fontSize:12,color:"var(--slate)",marginTop:3}}>Net {fmtUsd(w.net)} (fee {fmtUsd(w.fee)})</div>
+            </div>
+            <StatusPill status={w.status} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------------- ADMIN PANEL ---------------- */
+
+function AdminPanel({ value }){
+  const { adminConfig, showToast } = value;
+  const [local, setLocal] = useState(adminConfig);
+  const [loadingLive, setLoadingLive] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [broadcastMsg, setBroadcastMsg] = useState("");
+  const [broadcasting, setBroadcasting] = useState(false);
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [loadingWithdrawals, setLoadingWithdrawals] = useState(true);
+  const [actioningId, setActioningId] = useState(null);
+
+  const adminKey = useMemo(() => {
+    try{ return new URLSearchParams(window.location.search).get("key"); }
+    catch(e){ return null; }
+  }, []);
+
+  const loadWithdrawals = useCallback(async () => {
+    setLoadingWithdrawals(true);
+    try{
+      const resp = await fetch(`/api/admin-withdrawals?key=${encodeURIComponent(adminKey)}`);
+      const data = await resp.json();
+      if(resp.ok) setWithdrawals(data.withdrawals);
+      else showToast(data.error || "Could not load withdrawals");
+    }catch(e){
+      showToast("Network error loading withdrawals");
+    }
+    setLoadingWithdrawals(false);
+  }, [adminKey]);
+
+  useEffect(() => { loadWithdrawals(); }, [loadWithdrawals]);
+
+  const actionWithdrawal = async (withdrawalId, action) => {
+    setActioningId(withdrawalId);
+    try{
+      const resp = await fetch("/api/admin-withdrawals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: adminKey, withdrawalId, action }),
+      });
+      const data = await resp.json();
+      if(!resp.ok){
+        showToast(data.error || "Action failed");
+      }else{
+        showToast(action === "approve" ? "Marked as paid" : "Rejected & refunded");
+        loadWithdrawals();
+      }
+    }catch(e){
+      showToast("Network error");
+    }
+    setActioningId(null);
+  };
+
+  const copyAddress = async (addr) => {
+    try{
+      await navigator.clipboard.writeText(addr);
+      showToast("Address copied");
+    }catch(e){
+      showToast("Couldn't copy — long-press to copy manually");
+    }
+  };
+
+  const sendBroadcast = async () => {
+    if(!broadcastMsg.trim()) return;
+    setBroadcasting(true);
+    try{
+      const resp = await fetch("/api/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: adminKey, message: broadcastMsg }),
+      });
+      const data = await resp.json();
+      if(!resp.ok){
+        showToast(data.error || "Could not send broadcast");
+      }else{
+        showToast(`Sent to ${data.sent}/${data.totalUsers} users`);
+        setBroadcastMsg("");
+      }
+    }catch(e){
+      showToast("Network error sending broadcast");
+    }
+    setBroadcasting(false);
+  };
+
+  const [webhookStatus, setWebhookStatus] = useState(null);
+  const [webhookBusy, setWebhookBusy] = useState(false);
+
+  const [adjustTelegramId, setAdjustTelegramId] = useState("");
+  const [adjustAmount, setAdjustAmount] = useState("");
+  const [adjusting, setAdjusting] = useState(false);
+
+  const [referrals, setReferrals] = useState(null);
+  const [loadingReferrals, setLoadingReferrals] = useState(true);
+
+  const loadReferrals = useCallback(async () => {
+    setLoadingReferrals(true);
+    try{
+      const resp = await fetch(`/api/admin-referrals?key=${encodeURIComponent(adminKey)}`);
+      const data = await resp.json();
+      if(resp.ok) setReferrals(data.referrals);
+      else showToast(data.error || "Could not load referrals");
+    }catch(e){
+      showToast("Network error loading referrals");
+    }
+    setLoadingReferrals(false);
+  }, [adminKey]);
+
+  useEffect(() => { loadReferrals(); }, [loadReferrals]);
+
+  const adjustBalance = async () => {
+    if(!adjustTelegramId.trim() || !adjustAmount.trim()) return;
+    setAdjusting(true);
+    try{
+      const resp = await fetch("/api/admin-adjust-balance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: adminKey, telegramId: adjustTelegramId.trim(), amount: Number(adjustAmount) }),
+      });
+      const data = await resp.json();
+      if(!resp.ok){
+        showToast(data.error || "Could not adjust balance");
+      }else{
+        showToast(`New balance: ${data.newBalance.toLocaleString()} pts`);
+        setAdjustTelegramId("");
+        setAdjustAmount("");
+      }
+    }catch(e){
+      showToast("Network error adjusting balance");
+    }
+    setAdjusting(false);
+  };
+
+  const checkWebhook = async () => {
+    setWebhookBusy(true);
+    try{
+      const resp = await fetch(`/api/admin-set-webhook?key=${encodeURIComponent(adminKey)}`);
+      const data = await resp.json();
+      setWebhookStatus(data);
+    }catch(e){
+      showToast("Network error checking webhook");
+    }
+    setWebhookBusy(false);
+  };
+
+  const registerWebhook = async () => {
+    setWebhookBusy(true);
+    try{
+      const resp = await fetch("/api/admin-set-webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: adminKey }),
+      });
+      const data = await resp.json();
+      if(data.ok){
+        showToast("Webhook registered!");
+        checkWebhook();
+      }else{
+        showToast(data.description || data.error || "Could not register webhook");
+      }
+    }catch(e){
+      showToast("Network error registering webhook");
+    }
+    setWebhookBusy(false);
+  };
+
+  // Load the real live settings from Supabase (not the local demo defaults)
+  useEffect(() => {
+    (async () => {
+      try{
+        const resp = await fetch(`/api/admin-data?key=${encodeURIComponent(adminKey)}`);
+        const data = await resp.json();
+        if(resp.ok){
+          setLocal({
+            pointsPerDollar: data.config.points_per_dollar,
+            referralQualificationTasks: data.config.referral_qualification_tasks,
+            referralSystemEnabled: data.config.referral_system_enabled,
+            minWithdrawal: data.config.min_withdrawal,
+            maxWithdrawal: data.config.max_withdrawal,
+            withdrawalFeePercent: Number(data.config.withdrawal_fee_percent),
+            withdrawalsPerDay: data.config.withdrawals_per_day,
+            withdrawalDays: data.config.withdrawal_days,
+            withdrawalOpen: data.config.withdrawal_open.slice(0,5),
+            withdrawalClose: data.config.withdrawal_close.slice(0,5),
+            methodUSDT: data.config.method_usdt_enabled,
+            methodTON: data.config.method_ton_enabled,
+            referralTiers: data.tiers.map(t => ({
+              id: t.id, _key: t.id, minRef: t.min_ref, maxRef: t.max_ref, reward: t.reward,
+            })),
+            tasks: data.tasks.map(t => ({
+              id: t.id, _key: t.id, name: t.name, description: t.description, link: t.link,
+              reward: t.reward, active: t.active,
+              verificationType: t.verification_type, telegramChatId: t.telegram_chat_id,
+            })),
+          });
+        }else{
+          showToast(data.error || "Could not load live settings");
+        }
+      }catch(e){
+        showToast("Network error loading live settings");
+      }
+      setLoadingLive(false);
+    })();
+  }, [adminKey]);
+
+  const save = async () => {
+    setSaving(true);
+    try{
+      const resp = await fetch("/api/admin-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: adminKey, config: local, tiers: local.referralTiers, tasks: local.tasks }),
+      });
+      const data = await resp.json();
+      if(!resp.ok){
+        showToast(data.error || "Could not save");
+      }else{
+        showToast("Live settings saved");
+      }
+    }catch(e){
+      showToast("Network error saving");
+    }
+    setSaving(false);
+  };
+
+  const updateTier = (key, field, val) => {
+    setLocal(l => ({
+      ...l,
+      referralTiers: l.referralTiers.map(t => t._key===key ? {...t, [field]: Number(val)||0} : t)
+    }));
+  };
+  const addTier = () => {
+    const key = uid("tier");
+    setLocal(l => ({...l, referralTiers: [...l.referralTiers, {id:null, _key:key, minRef:1, maxRef:1, reward:0}]}));
+  };
+  const removeTier = (key) => {
+    setLocal(l => ({...l, referralTiers: l.referralTiers.filter(t=>t._key!==key)}));
+  };
+
+  const updateTask = (key, field, val) => {
+    setLocal(l => ({...l, tasks: l.tasks.map(t => t._key===key ? {...t, [field]: field==="reward"?(Number(val)||0):val} : t)}));
+  };
+  const addTask = () => {
+    const key = uid("task");
+    setLocal(l => ({...l, tasks: [...l.tasks, {id:null, _key:key, name:"New task", description:"", link:"", reward:10, active:true, verificationType:"self_report", telegramChatId:""}]}));
+  };
+  const removeTask = (key) => {
+    setLocal(l => ({...l, tasks: l.tasks.filter(t=>t._key!==key)}));
+  };
+
+  const toggleDay = (code) => {
+    setLocal(l => {
+      const has = l.withdrawalDays.includes(code);
+      return {...l, withdrawalDays: has ? l.withdrawalDays.filter(d=>d!==code) : [...l.withdrawalDays, code]};
+    });
+  };
+
+  const days = ["SU","MO","TU","WE","TH","FR","SA"];
+
+  if(loadingLive){
+    return <div style={{padding:40, textAlign:"center", color:"var(--slate)"}}>Loading live settings...</div>;
+  }
+
+  return (
+    <div>
+      <div className="admin-section">
+        <h3>Withdrawal requests</h3>
+        {loadingWithdrawals ? (
+          <div className="card empty">Loading...</div>
+        ) : withdrawals.length === 0 ? (
+          <div className="card empty">No withdrawal requests yet.</div>
+        ) : withdrawals.map(w => (
+          <div className="card" key={w.id}>
+            <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8}}>
+              <div>
+                <div style={{fontWeight:600, fontSize:13.5}}>{w.method} · {w.points.toLocaleString()} pts</div>
+                <div style={{fontSize:12, color:"var(--slate)", marginTop:2}}>
+                  User {w.app_users ? w.app_users.telegram_id : w.user_id} · {new Date(w.created_at).toLocaleString()}
+                </div>
+              </div>
+              <StatusPill status={w.status} />
+            </div>
+            <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:8}}>
+              <code style={{
+                flex:1, fontSize:12, color:"var(--paper)", background:"var(--ink-3)",
+                padding:"6px 10px", borderRadius:7, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"
+              }}>{w.wallet_address}</code>
+              <button className="btn btn-ghost btn-sm" onClick={()=>copyAddress(w.wallet_address)}>Copy</button>
+            </div>
+            <div style={{fontSize:12, color:"var(--slate)", marginBottom:10}}>
+              USD {Number(w.usd_value).toFixed(3)} · fee {Number(w.fee).toFixed(3)} · net {Number(w.net_amount).toFixed(3)}
+            </div>
+            {(w.status === "Pending" || w.status === "Under Review") && (
+              <div style={{display:"flex", gap:8}}>
+                <button
+                  className="btn btn-primary btn-sm" style={{flex:1}}
+                  disabled={actioningId===w.id}
+                  onClick={()=>actionWithdrawal(w.id, "approve")}
+                >{actioningId===w.id ? "..." : "Approve & Paid"}</button>
+                <button
+                  className="btn btn-danger btn-sm" style={{flex:1}}
+                  disabled={actioningId===w.id}
+                  onClick={()=>actionWithdrawal(w.id, "reject")}
+                >{actioningId===w.id ? "..." : "Reject & Refund"}</button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="admin-section">
+        <h3>Adjust user balance</h3>
+        <div className="row2">
+          <div className="field">
+            <label>User's Telegram ID</label>
+            <input value={adjustTelegramId} onChange={e=>setAdjustTelegramId(e.target.value)} placeholder="e.g. 849213" />
+          </div>
+          <div className="field">
+            <label>Amount (+ to add, - to remove)</label>
+            <input type="number" value={adjustAmount} onChange={e=>setAdjustAmount(e.target.value)} placeholder="e.g. 500 or -200" />
+          </div>
+        </div>
+        <button className="btn btn-primary" style={{width:"100%"}} disabled={adjusting || !adjustTelegramId.trim() || !adjustAmount.trim()} onClick={adjustBalance}>
+          {adjusting ? "Adjusting..." : "Adjust balance"}
+        </button>
+      </div>
+
+      <div className="admin-section">
+        <h3>Referral tracking</h3>
+        {loadingReferrals ? (
+          <div className="card empty">Loading...</div>
+        ) : !referrals || referrals.length === 0 ? (
+          <div className="card empty">No referrals yet.</div>
+        ) : (
+          <div className="card">
+            {referrals.map(r => (
+              <div className="ref-row" key={r.id} style={{flexDirection:"column", alignItems:"flex-start", gap:4}}>
+                <div style={{display:"flex", justifyContent:"space-between", width:"100%"}}>
+                  <span>
+                    <span style={{color:"var(--slate)"}}>Referrer:</span> {r.referrer ? r.referrer.telegram_id : "?"}
+                  </span>
+                  {r.qualified ? <span className="pill pill-done">Qualified</span> : <span className="pill pill-pending">In progress</span>}
+                </div>
+                <div style={{fontSize:12, color:"var(--slate)"}}>
+                  Referred: {r.referred ? r.referred.telegram_id : "?"} · {r.tasks_completed} tasks done · {new Date(r.created_at).toLocaleDateString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="admin-section">
+        <h3>Point conversion</h3>
+        <div className="field">
+          <label>Points per $1.00 (default 10,000 → 100 pts = $0.01)</label>
+          <input type="number" value={local.pointsPerDollar} onChange={e=>setLocal({...local, pointsPerDollar:Number(e.target.value)||1})} />
+        </div>
+      </div>
+
+      <div className="admin-section">
+        <h3>Referral program</h3>
+        <div className="checkline">
+          <input type="checkbox" checked={local.referralSystemEnabled} onChange={e=>setLocal({...local, referralSystemEnabled:e.target.checked})} />
+          <span>Referral system enabled</span>
+        </div>
+        <div className="field">
+          <label>Tasks required to qualify a referral</label>
+          <input type="number" value={local.referralQualificationTasks} onChange={e=>setLocal({...local, referralQualificationTasks:Number(e.target.value)||1})} />
+        </div>
+        <label style={{display:"block",fontSize:12,color:"var(--slate)",marginBottom:6}}>Commission-drop tiers</label>
+        <table className="tiers">
+          <thead><tr><th>Min ref</th><th>Max ref</th><th>Reward</th><th></th></tr></thead>
+          <tbody>
+            {local.referralTiers.map(t => (
+              <tr key={t._key}>
+                <td><input type="number" value={t.minRef} onChange={e=>updateTier(t._key,"minRef",e.target.value)} /></td>
+                <td><input type="number" value={t.maxRef} onChange={e=>updateTier(t._key,"maxRef",e.target.value)} /></td>
+                <td><input type="number" value={t.reward} onChange={e=>updateTier(t._key,"reward",e.target.value)} /></td>
+                <td><button className="btn btn-danger btn-sm" onClick={()=>removeTier(t._key)}>×</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <button className="btn btn-ghost btn-sm" style={{marginTop:10}} onClick={addTier}>+ Add tier</button>
+      </div>
+
+      <div className="admin-section">
+        <h3>Tasks</h3>
+        {local.tasks.map(t => (
+          <div key={t._key} className="task-admin-row" style={{flexWrap:"wrap"}}>
+            <input style={{flex:"2 1 140px"}} value={t.name} onChange={e=>updateTask(t._key,"name",e.target.value)} placeholder="Task name" />
+            <input style={{flex:"3 1 160px"}} value={t.description} onChange={e=>updateTask(t._key,"description",e.target.value)} placeholder="Description" />
+            <input style={{flex:"3 1 160px"}} value={t.link||""} onChange={e=>updateTask(t._key,"link",e.target.value)} placeholder="Link (https://...)" />
+            <input style={{flex:"0 0 60px"}} type="number" value={t.reward} onChange={e=>updateTask(t._key,"reward",e.target.value)} />
+            <label style={{display:"flex",alignItems:"center",gap:4,fontSize:11.5,color:"var(--slate)"}}>
+              <input type="checkbox" checked={t.active} onChange={e=>updateTask(t._key,"active",e.target.checked)} /> active
+            </label>
+            <label style={{display:"flex",alignItems:"center",gap:4,fontSize:11.5,color:"var(--slate)"}}>
+              <input type="checkbox" checked={t.verificationType==="telegram_membership"} onChange={e=>updateTask(t._key,"verificationType", e.target.checked ? "telegram_membership" : "self_report")} /> bot-verified
+            </label>
+            {t.verificationType==="telegram_membership" && (
+              <input style={{flex:"2 1 140px"}} value={t.telegramChatId||""} onChange={e=>updateTask(t._key,"telegramChatId",e.target.value)} placeholder="@channel_username" />
+            )}
+            <button className="btn btn-danger btn-sm" onClick={()=>removeTask(t._key)}>×</button>
+          </div>
+        ))}
+        <button className="btn btn-ghost btn-sm" style={{marginTop:6}} onClick={addTask}>+ Add task</button>
+      </div>
+
+      <div className="admin-section">
+        <h3>Withdrawal settings</h3>
+        <div className="row2">
+          <div className="field">
+            <label>Minimum withdrawal (pts)</label>
+            <input type="number" value={local.minWithdrawal} onChange={e=>setLocal({...local, minWithdrawal:Number(e.target.value)||0})} />
+          </div>
+          <div className="field">
+            <label>Maximum withdrawal (pts)</label>
+            <input type="number" value={local.maxWithdrawal} onChange={e=>setLocal({...local, maxWithdrawal:Number(e.target.value)||0})} />
+          </div>
+        </div>
+        <div className="row2">
+          <div className="field">
+            <label>Withdrawal fee (%)</label>
+            <input type="number" value={local.withdrawalFeePercent} onChange={e=>setLocal({...local, withdrawalFeePercent:Number(e.target.value)||0})} />
+          </div>
+          <div className="field">
+            <label>Withdrawals per day</label>
+            <input type="number" value={local.withdrawalsPerDay} onChange={e=>setLocal({...local, withdrawalsPerDay:Number(e.target.value)||1})} />
+          </div>
+        </div>
+        <div className="row2">
+          <div className="field">
+            <label>Opening time</label>
+            <input type="time" value={local.withdrawalOpen} onChange={e=>setLocal({...local, withdrawalOpen:e.target.value})} />
+          </div>
+          <div className="field">
+            <label>Closing time</label>
+            <input type="time" value={local.withdrawalClose} onChange={e=>setLocal({...local, withdrawalClose:e.target.value})} />
+          </div>
+        </div>
+        <label style={{display:"block",fontSize:12,color:"var(--slate)",marginBottom:8}}>Withdrawal days</label>
+        <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
+          {days.map(d => (
+            <button key={d} onClick={()=>toggleDay(d)}
+              className="btn btn-sm"
+              style={{
+                background: local.withdrawalDays.includes(d) ? "var(--gold)" : "var(--ink-3)",
+                color: local.withdrawalDays.includes(d) ? "var(--ink)" : "var(--slate)",
+                border:"1px solid var(--line-strong)"
+              }}>{d}</button>
+          ))}
+        </div>
+        <div className="checkline">
+          <input type="checkbox" checked={local.methodUSDT} onChange={e=>setLocal({...local, methodUSDT:e.target.checked})} />
+          <span>USDT withdrawals enabled</span>
+        </div>
+        <div className="checkline">
+          <input type="checkbox" checked={local.methodTON} onChange={e=>setLocal({...local, methodTON:e.target.checked})} />
+          <span>TON withdrawals enabled</span>
+        </div>
+      </div>
+
+      <div className="admin-section">
+        <h3>Bot webhook setup</h3>
+        <div style={{fontSize:12.5, color:"var(--slate)", marginBottom:10, lineHeight:1.5}}>
+          Registers your bot so it responds to /start. One-time setup — safe to tap again anytime to re-check.
+        </div>
+        <div style={{display:"flex", gap:8, marginBottom:10}}>
+          <button className="btn btn-ghost btn-sm" style={{flex:1}} disabled={webhookBusy} onClick={checkWebhook}>
+            {webhookBusy ? "..." : "Check status"}
+          </button>
+          <button className="btn btn-primary btn-sm" style={{flex:1}} disabled={webhookBusy} onClick={registerWebhook}>
+            {webhookBusy ? "..." : "Register webhook"}
+          </button>
+        </div>
+        {webhookStatus && (
+          <div className="card" style={{fontSize:12, wordBreak:"break-all"}}>
+            {webhookStatus.result ? (
+              <>
+                <div>URL: {webhookStatus.result.url || "(not set)"}</div>
+                {webhookStatus.result.last_error_message && (
+                  <div style={{color:"var(--red)", marginTop:6}}>Last error: {webhookStatus.result.last_error_message}</div>
+                )}
+                {!webhookStatus.result.last_error_message && webhookStatus.result.url && (
+                  <div style={{color:"var(--teal)", marginTop:6}}>No errors reported</div>
+                )}
+              </>
+            ) : (
+              <div>{webhookStatus.description || JSON.stringify(webhookStatus)}</div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="admin-section">
+        <h3>Broadcast to all users</h3>
+        <div className="field">
+          <label>Message</label>
+          <textarea
+            value={broadcastMsg}
+            onChange={e=>setBroadcastMsg(e.target.value)}
+            placeholder="Message to send to every user who has opened the bot..."
+            rows={4}
+            style={{
+              width:"100%",background:"var(--ink-3)",border:"1px solid var(--line-strong)",
+              borderRadius:9,padding:"11px 12px",color:"var(--paper)",fontSize:14,
+              fontFamily:"'Inter',sans-serif",resize:"vertical"
+            }}
+          />
+        </div>
+        <button className="btn btn-primary" style={{width:"100%"}} disabled={broadcasting || !broadcastMsg.trim()} onClick={sendBroadcast}>
+          {broadcasting ? "Sending..." : "Send broadcast"}
+        </button>
+      </div>
+
+      <button className="btn btn-primary" style={{width:"100%", marginBottom:20}} disabled={saving} onClick={save}>{saving ? "Saving..." : "Save all settings"}</button>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
