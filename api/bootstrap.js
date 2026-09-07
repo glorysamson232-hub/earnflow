@@ -74,6 +74,14 @@ export default async function handler(req, res) {
 
     if (users.length) {
       user = users[0];
+      // Keep username current in case they changed it since last login
+      if (tgUser.username && tgUser.username !== user.telegram_username) {
+        const updated = await supabaseFetch(`app_users?id=eq.${user.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ telegram_username: tgUser.username }),
+        });
+        user = updated[0];
+      }
     } else {
       isNewUser = true;
       const created = await supabaseFetch(`app_users`, {
@@ -81,6 +89,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           telegram_id: telegramId,
           display_name: tgUser.first_name || tgUser.username || "User",
+          telegram_username: tgUser.username || null,
         }),
       });
       user = created[0];
@@ -128,5 +137,4 @@ export default async function handler(req, res) {
     console.error(err);
     return res.status(500).json({ error: "Something went wrong" });
   }
-          }
-  
+}
