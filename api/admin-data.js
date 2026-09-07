@@ -65,6 +65,9 @@ export default async function handler(req, res) {
             withdrawal_close: config.withdrawalClose,
             method_usdt_enabled: config.methodUSDT,
             method_ton_enabled: config.methodTON,
+            require_channel_join: config.requireChannelJoin,
+            official_channel_id: config.officialChannelId || null,
+            official_channel_link: config.officialChannelLink || null,
             min_referrals_for_withdrawal: config.minReferralsForWithdrawal,
             require_all_tasks_for_withdrawal: config.requireAllTasksForWithdrawal,
           }),
@@ -120,4 +123,4 @@ export default async function handler(req, res) {
     console.error(err);
     return res.status(500).json({ error: "Something went wrong" });
   }
-}
+    }
