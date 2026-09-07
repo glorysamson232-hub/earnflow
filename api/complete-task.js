@@ -6,6 +6,20 @@
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+
+async function notifyUser(telegramId, text) {
+  if (!BOT_TOKEN) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: telegramId, parse_mode: "HTML", text }),
+    });
+  } catch (e) {
+    console.error("Failed to notify user:", e);
+  }
+}
 
 async function supabaseFetch(path, options = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -23,6 +37,21 @@ async function supabaseFetch(path, options = {}) {
     throw new Error(`Supabase error ${res.status}: ${text}`);
   }
   return res.json();
+}
+
+// Asks Telegram itself whether this user is a member of the given
+// channel/group. Requires your bot to be an ADMIN in that chat —
+// Telegram won't return membership info to bots that aren't.
+async function verifyTelegramMembership(chatId, userTelegramId) {
+  const url = `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${encodeURIComponent(chatId)}&user_id=${userTelegramId}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (!data.ok) {
+    // Most common cause: bot isn't an admin in that chat yet
+    throw new Error(`Telegram verification failed: ${data.description || "unknown error"}`);
+  }
+  const validStatuses = ["member", "administrator", "creator"];
+  return validStatuses.includes(data.result.status);
 }
 
 export default async function handler(req, res) {
@@ -61,6 +90,20 @@ export default async function handler(req, res) {
     );
     if (existing.length) {
       return res.status(409).json({ error: "Task already completed" });
+    }
+
+    // 3b. For Telegram tasks, verify real membership before crediting —
+    //     never trust a client claiming "I did it".
+    if (task.verification_type === "telegram_membership") {
+      if (!task.telegram_chat_id) {
+        return res.status(500).json({ error: "Task misconfigured: missing telegram_chat_id" });
+      }
+      const isMember = await verifyTelegramMembership(task.telegram_chat_id, telegramId);
+      if (!isMember) {
+        return res.status(400).json({
+          error: "We couldn't verify you've joined yet. Join the channel/group, then try again.",
+        });
+      }
     }
 
     // 4. Record the completion
@@ -123,6 +166,11 @@ export default async function handler(req, res) {
             total_referral_earnings: referrer.total_referral_earnings + reward,
           }),
         });
+
+        await notifyUser(
+          referrer.telegram_id,
+          `🎉 <b>Referral qualified!</b>\n\nSomeone you invited just completed their tasks. You've earned <b>${reward} pts</b> as your referral reward.`
+        );
       } else {
         await supabaseFetch(`referrals?id=eq.${referral.id}`, {
           method: "PATCH",
