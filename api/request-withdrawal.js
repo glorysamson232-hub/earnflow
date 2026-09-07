@@ -20,6 +20,7 @@ async function notifyPaymentChannel(withdrawal, telegramId) {
         parse_mode: "HTML",
         text:
           `💸 <b>New withdrawal request</b>\n` +
+          `Bot: @EARNFLOW9BOT\n` +
           `User: <code>${telegramId}</code>\n` +
           `Method: ${withdrawal.method}\n` +
           `Amount: ${withdrawal.points.toLocaleString()} pts ($${withdrawal.usd_value.toFixed(3)})\n` +
