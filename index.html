@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#4d3008">
+<title>SAND WORLD</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --ink:#2b1a04;--muted:#7a5c26;--line:#e6c97f;--acc:#8a5410;--green:#1f6b2c;
+  --grain:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .32 0 0 0 0 .08 0 0 0 1.1 -.35'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grainL:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .86 0 0 0 0 .5 0 0 0 1.2 -.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{background:#e8b04a}
+body{margin:0;background:#e8b04a;font-family:Inter,system-ui,Arial,sans-serif;color:var(--ink)}
+#sandfx{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+.app{position:relative;z-index:1;max-width:480px;margin:auto;min-height:100vh;padding-bottom:88px}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+/* hero: burnished sand-bronze with glittering grain */
+.hero{position:relative;overflow:hidden;color:#fff6da;padding:calc(20px + env(safe-area-inset-top)) 17px 26px;border-radius:0 0 28px 28px;
+  background:radial-gradient(circle at 88% -10%,rgba(255,214,120,.55),transparent 55%),var(--grainL),linear-gradient(165deg,#4d3008,#7d4f10 55%,#9a6319);
+  background-size:auto,180px 180px,auto;
+  box-shadow:0 0 0 1px rgba(255,226,150,.5),0 0 44px rgba(255,200,80,.6),0 14px 40px rgba(90,50,0,.35)}
+.hero::after,.mine::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 40%,rgba(255,240,190,.3) 50%,transparent 60%);transform:translateX(-100%);animation:sweep 7s ease-in-out infinite}
+@keyframes sweep{0%,55%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.brand{display:flex;gap:11px;align-items:center}
+.logo{width:45px;height:45px;border-radius:15px;background:linear-gradient(160deg,#fbe08c,#d9962c);color:#3a2306;display:grid;place-items:center;font-weight:900;font-size:21px;box-shadow:0 0 18px rgba(255,205,90,.65)}
+.brand h1{font-size:20px;margin:0}
+.brand p{font-size:11px;color:#f1d9a0;margin:3px 0 0}
+.gear{margin-left:auto;width:40px;height:40px;border-radius:13px;border:1px solid rgba(255,226,150,.4);background:rgba(255,226,150,.12);color:#fff6da;font-size:18px}
+.bal{margin-top:24px}
+.bal small{color:#f1d9a0}
+.bal strong{display:block;font-size:34px;margin-top:3px;color:#fff3c4;text-shadow:0 0 14px rgba(255,214,110,.8),0 0 34px rgba(255,190,70,.5);animation:glow 3.4s ease-in-out infinite}
+@keyframes glow{0%,100%{text-shadow:0 0 12px rgba(255,214,110,.6),0 0 28px rgba(255,190,70,.35)}50%{text-shadow:0 0 18px rgba(255,224,130,.95),0 0 44px rgba(255,190,70,.65)}}
+.bal span{font-size:13px;color:#f1d9a0}
+.star{display:inline-block;animation:twinkle 2.4s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.55;transform:scale(.85) rotate(0)}50%{opacity:1;transform:scale(1.2) rotate(15deg)}}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:17px}
+
+/* buttons */
+.btn{padding:12px;border-radius:12px;border:0;font-weight:800}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.primary{background:linear-gradient(180deg,#fbe08c,#e3a733);color:var(--ink);box-shadow:0 0 0 1px rgba(255,244,196,.8) inset,0 4px 16px rgba(240,170,40,.55)}
+.ghost{background:rgba(255,226,150,.12);color:#fff6da;border:1px solid rgba(255,226,150,.4)}
+.soft{background:#fffaf0;border:1px solid var(--line);color:var(--ink)}
+.danger{background:#fbd5cf;color:#8f2a1d}
+.small{padding:8px 11px;font-size:12px}
+#mine.run{animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 1px rgba(255,244,196,.8) inset,0 4px 14px rgba(240,170,40,.5)}50%{box-shadow:0 0 0 1px rgba(255,244,196,.9) inset,0 0 26px rgba(255,210,90,.95)}}
+
+.content{padding:17px}
+.page{display:none}
+.page.active{display:block}
+.title{display:flex;justify-content:space-between;align-items:center;margin:3px 0 12px}
+.title h2{font-size:18px;margin:0;color:var(--ink)}
+.title .muted{color:#4a3512}
+.muted{color:var(--muted);font-size:13px}
+
+/* sandy glowing cards */
+.card,.stat,.ref{background:var(--grain),linear-gradient(180deg,rgba(255,249,229,.93),rgba(255,238,198,.9));background-size:180px 180px,auto;
+  border:1px solid rgba(255,238,180,.85);border-radius:19px;padding:15px;margin-bottom:11px;
+  box-shadow:0 0 0 1px rgba(255,238,180,.55),0 0 22px rgba(255,208,100,.4),0 10px 28px rgba(120,70,0,.22);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.stat{border-radius:16px;padding:13px;margin-bottom:0}
+.stat b{display:block;margin-top:4px;font-size:18px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.big{font-size:25px;font-weight:900;margin:7px 0}
+
+/* mine card: molten gold */
+.mine{position:relative;overflow:hidden;color:var(--ink);border:0;
+  background:var(--grainL),radial-gradient(circle at 15% 0%,rgba(255,246,196,.9),transparent 55%),linear-gradient(140deg,#c98a26,#efc158 60%,#f8dc8a);
+  background-size:180px 180px,auto,auto;
+  box-shadow:0 0 0 1px rgba(255,240,180,.8),0 0 36px rgba(255,200,80,.75),0 12px 30px rgba(120,70,0,.3)}
+.dim{color:rgba(43,26,4,.72);font-size:12px}
+.row{display:flex;justify-content:space-between;color:rgba(43,26,4,.75);font-size:12px}
+.hour{font-size:25px;font-weight:900;margin:7px 0}
+.hour small{font-size:12px;color:rgba(43,26,4,.72);font-weight:500}
+.sandglass{font-size:45px;display:inline-block}
+.mine.on .sandglass{animation:flip 3.2s ease-in-out infinite}
+@keyframes flip{0%,45%{transform:rotate(0)}55%,100%{transform:rotate(180deg)}}
+.progress{height:8px;background:rgba(43,26,4,.2);border-radius:99px;overflow:hidden;margin:13px 0}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#6b430a,#a5691a);transition:width .2s}
+.mine.on .progress i{background:repeating-linear-gradient(115deg,#6b430a 0 10px,#9a6118 10px 20px);background-size:28px 100%;animation:stripes 1s linear infinite}
+@keyframes stripes{to{background-position:28px 0}}
+.pbar{height:8px;background:#ecd9a0;border-radius:99px;overflow:hidden;margin-top:10px}
+.pbar i{display:block;height:100%;background:linear-gradient(90deg,#c98a26,#efc158);border-radius:99px}
+
+/* tasks + tiers */
+.task,.tierhead{display:flex;gap:11px;align-items:flex-start}
+.taskicon{width:43px;height:43px;border-radius:13px;background:linear-gradient(160deg,#fde9ad,#f0c25a);color:#6b430a;display:grid;place-items:center;font-weight:900;flex:none;box-shadow:0 0 12px rgba(255,200,80,.5)}
+.taskmain{flex:1;min-width:0}
+.taskmain b{display:block}
+.reward{color:var(--green);font-weight:800;font-size:13px;margin-top:3px}
+.taskmain button{padding:8px 11px;border-radius:10px;background:linear-gradient(180deg,#fbe08c,#e3a733);color:var(--ink);border:0;font-weight:800;margin-top:8px;box-shadow:0 3px 10px rgba(240,170,40,.45)}
+.taskmain button:disabled{background:#d8cdb2;box-shadow:none;color:#6d5f3f}
+.tier .btn{width:100%;margin-top:11px}
+.tier.locked{opacity:.88}
+.tier .big{margin:10px 0 2px}
+.tier .big small{font-size:12px;color:var(--muted);font-weight:500}
+.pill{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:800;white-space:nowrap}
+.pill.act{background:#fde6a3;color:#6b430a}
+.pill.own{background:#ece1c4;color:#5a4a26}
+.pill.open{background:#d9f2d0;color:#1f6b2c}
+.pill.shut{background:#fbd5cf;color:#8f2a1d}
+.pill.lock{background:#fff0b8;color:#7a4d06}
+
+/* referrals */
+.code{font-size:20px;font-weight:900;letter-spacing:2px}
+.copy{margin-top:9px;background:linear-gradient(180deg,#fbe08c,#e3a733);color:var(--ink);border:0;padding:10px 13px;border-radius:10px;font-weight:800;box-shadow:0 3px 10px rgba(240,170,40,.45)}
+
+/* wallet */
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:rgba(74,44,8,.2);padding:4px;border-radius:14px;margin-bottom:11px}
+.seg button{border:0;background:transparent;padding:10px 4px;border-radius:11px;font-weight:800;font-size:13px;color:#3f2f0e}
+.seg button.on{background:#fff6dc;color:var(--ink);box-shadow:0 0 14px rgba(255,205,90,.7)}
+.win{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 4px}
+.form{display:grid;gap:9px}
+.hrow{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.hrow:first-of-type{border-top:0}
+
+/* inputs */
+.form input,.fl input,.fl select,.modal input{width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;background:#fffdf5;font:inherit;color:var(--ink);outline:0}
+.form input:focus,.fl input:focus,.fl select:focus,.modal input:focus{border-color:var(--acc)}
+.form input:read-only{background:#f6ecd0}
+
+/* admin */
+.admin-box summary{font-weight:800;cursor:pointer}
+.admin-box[open] summary{margin-bottom:6px}
+.admin-box .sub{font-weight:800;font-size:13px;margin:16px 0 0}
+.admin-box .sub:first-of-type{margin-top:8px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+.fl{display:grid;gap:4px;font-size:12px;color:var(--muted)}
+.fl.full,.full{grid-column:1/-1}
+.trow{border:1px solid var(--line);border-radius:14px;padding:11px;margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:9px;background:rgba(255,250,235,.6)}
+.ro{font-size:12px;color:var(--muted);align-self:center}
+
+/* nav, toast, modal */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(480px,100%);display:grid;grid-template-columns:repeat(5,1fr);background:var(--grain),rgba(255,246,220,.94);background-size:180px 180px,auto;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(255,200,80,.35);padding:7px 7px calc(7px + env(safe-area-inset-bottom));z-index:4}
+.nav button{border:0;background:none;color:#6b5528;border-radius:12px;padding:7px 2px;font-size:11px;font-weight:700}
+.nav button.active{background:rgba(226,167,51,.28);color:var(--ink);box-shadow:0 0 12px rgba(255,205,90,.6)}
+.nav span{display:block;font-size:18px;margin-bottom:2px}
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:#2b1a04;color:#fff3c4;padding:10px 14px;border-radius:11px;font-size:13px;display:none;z-index:30;max-width:90%;text-align:center;box-shadow:0 0 18px rgba(255,200,80,.5)}
+.modal{position:fixed;inset:0;background:rgba(43,26,4,.55);display:none;place-items:center;z-index:20;padding:20px}
+.modal.show{display:grid}
+.modal .card{width:min(360px,100%);margin:0}
+
+@media (prefers-reduced-motion:reduce){
+  .hero::after,.mine::after,.star,.bal strong,#mine.run,.mine.on .sandglass,.mine.on .progress i{animation:none}
+  .progress i{transition:none}
+}
+</style>
+</head>
+<body>
+<canvas id="sandfx" aria-hidden="true"></canvas>
+
+<div class="app">
+<header class="hero">
+  <div class="brand">
+    <div class="logo">S</div>
+    <div><h1 id="appName">SAND WORLD</h1><p id="appTag">Mine SAND • Complete tasks • Earn</p></div>
+    <button class="gear" id="adminBtn" aria-label="Open admin panel">⚙</button>
+  </div>
+  <div class="bal"><small>SAND Balance <span class="star" aria-hidden="true">🌟</span></small><strong id="sand">0</strong><span id="usd">≈ 0.0000 USDC</span></div>
+  <div class="actions"><button class="btn primary" id="mine">⛏ Start Mine</button><button class="btn ghost" data-go="wallet">Withdraw</button></div>
+</header>
+
+<main class="content">
+  <section class="page active" id="home">
+    <div class="title"><h2>Mining Center</h2><span class="muted" id="mineState">Ready</span></div>
+    <div class="card mine" id="mineCard">
+      <div class="sandglass">⌛</div>
+      <div class="dim" id="curName">Current Mine</div>
+      <div class="hour"><span id="curRate">—</span> <small>/ hour</small></div>
+      <div class="dim" id="curUsd"></div>
+      <div class="progress"><i id="bar"></i></div>
+      <div class="row"><span id="mineText">Start your mine</span><span id="timer">00:00</span></div>
+      <button class="btn soft" data-go="buy" id="mineCta" style="width:100%;margin-top:12px" hidden>Buy a mine</button>
+    </div>
+    <div class="card" id="wbCard"></div>
+    <div class="grid">
+      <div class="stat"><span class="muted">Valid referrals</span><b id="refs">1</b></div>
+      <div class="stat"><span class="muted">Tasks completed</span><b id="done">0</b></div>
+    </div>
+    <div class="card" style="margin-top:11px" id="convCard"></div>
+  </section>
+
+  <section class="page" id="tasks">
+    <div class="title"><h2>Tasks</h2><span class="muted">Earn SAND</span></div>
+    <div id="tasksList"></div>
+  </section>
+
+  <section class="page" id="buy">
+    <div class="title"><h2>Buy Mine</h2><span class="muted">Unlock with referrals</span></div>
+    <div class="card" id="buySummary"></div>
+    <div id="buyList"></div>
+  </section>
+
+  <section class="page" id="referrals">
+    <div class="title"><h2>Referrals</h2><span class="muted">Build your mine</span></div>
+    <div class="ref"><div class="muted">Your referral code</div><div class="code" id="code">SAND-7K4P</div><button class="copy" id="copy">Copy code</button></div>
+    <div class="card" style="margin-top:11px" id="refEarn"></div>
+    <div class="card" id="refProg"></div>
+    <div class="card" id="friendsCard" hidden></div>
+  </section>
+
+  <section class="page" id="wallet">
+    <div class="title"><h2>Wallet</h2><span class="muted">USDC</span></div>
+    <div class="seg"><button data-route="mine" class="on">Mine</button><button data-route="ref">Referrals</button><button data-route="welcome">Welcome</button></div>
+    <div class="card">
+      <div class="muted" id="availLabel">Available</div>
+      <h2 id="walletusd" style="margin:4px 0">0.0000 USDC</h2>
+      <div class="win" id="winStatus"></div>
+      <p class="muted" id="limits"></p>
+      <div class="form">
+        <input id="amount" type="number" step="0.01" inputmode="decimal" placeholder="USDC amount">
+        <input id="address" placeholder="USDC wallet address">
+        <div class="muted" id="feeCalc"></div>
+        <button class="btn primary" id="withdraw">Request Withdrawal</button>
+      </div>
+    </div>
+    <div class="card"><b>Recent requests</b><div id="hist"></div></div>
+  </section>
+
+  <section class="page" id="admin">
+    <div class="title"><h2>Admin</h2><button class="btn soft small" data-go="home">Back to app</button></div>
+    <p class="muted" id="saved" style="margin:0 0 10px;color:#4a3512">Changes save automatically on this device.</p>
+    <div id="adminBody"></div>
+  </section>
+</main>
+
+<nav class="nav">
+  <button class="active" data-page="home"><span>⌂</span>Home</button>
+  <button data-page="tasks"><span>✓</span>Tasks</button>
+  <button data-page="buy"><span>⛏</span>Buy Mine</button>
+  <button data-page="referrals"><span>👥</span>Referrals</button>
+  <button data-page="wallet"><span>◈</span>Wallet</button>
+</nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="modal" id="gate" role="dialog" aria-modal="true" aria-label="Admin passcode">
+  <div class="card">
+    <b>Admin passcode</b>
+    <p class="muted">Enter the passcode to edit settings.</p>
+    <div class="form">
+      <input id="pass" type="password" placeholder="Passcode" autocomplete="off">
+      <button class="btn primary" id="unlock">Open admin</button>
+      <button class="btn soft" id="cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+/* ---------- Live glowing sand background ---------- */
+(function(){
+  const cv=document.getElementById('sandfx'),cx=cv.getContext('2d');
+  const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const R=Math.random;
+  let W=0,H=0,dpr=1,t=0,prev=0,grains=[];
+  const glints=Array.from({length:16},()=>({x:R(),y:R(),ph:R()*6.28,sp:.5+R()*.9,s:8+R()*12}));
+  const bursts=[];
+  const sprite=(()=>{const s=document.createElement('canvas');s.width=s.height=64;const g=s.getContext('2d');
+    const r=g.createRadialGradient(32,32,0,32,32,32);
+    r.addColorStop(0,'rgba(255,246,214,1)');r.addColorStop(.3,'rgba(255,218,130,.5)');r.addColorStop(1,'rgba(255,190,80,0)');
+    g.fillStyle=r;g.fillRect(0,0,64,64);return s})();
+  const L=[
+    {y:.48,a:24,f:.0060,s:.10,c1:'#fbdc90',c2:'#eab95c'},
+    {y:.60,a:32,f:.0048,s:.16,c1:'#f2c56c',c2:'#dc9d40'},
+    {y:.73,a:38,f:.0037,s:.22,c1:'#e8b154',c2:'#d0902f'},
+    {y:.87,a:30,f:.0032,s:.30,c1:'#dfa848',c2:'#bf832a'}
+  ];
+  function seed(){
+    const n=Math.round(Math.min(180,Math.max(80,W*H/5500)));
+    grains=Array.from({length:n},()=>({x:R()*W,y:R()*H,z:R(),ph:R()*6.28,sp:.6+R()*1.6,g:R()<.24}));
+  }
+  function size(){
+    dpr=Math.min(window.devicePixelRatio||1,1.75);W=innerWidth;H=innerHeight;
+    cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);cx.setTransform(dpr,0,0,dpr,0,0);
+    seed();if(still)draw(0);
+  }
+  function dune(l,i){
+    const by=H*l.y,ys=[];
+    for(let x=0;x<=W+8;x+=8){
+      ys.push(by+l.a*Math.sin(x*l.f+t*l.s+i*1.7)+l.a*.55*Math.sin(x*l.f*2.3-t*l.s*.7+i*3.1));
+    }
+    cx.beginPath();cx.moveTo(0,H);
+    ys.forEach((y,k)=>cx.lineTo(k*8,y));
+    cx.lineTo((ys.length-1)*8,H);cx.closePath();
+    const g=cx.createLinearGradient(0,by-l.a,0,H);g.addColorStop(0,l.c1);g.addColorStop(1,l.c2);
+    cx.fillStyle=g;cx.fill();
+    cx.beginPath();
+    ys.forEach((y,k)=>k?cx.lineTo(k*8,y):cx.moveTo(0,y));
+    cx.strokeStyle='rgba(255,243,200,'+(.38+.16*Math.sin(t*.8+i))+')';cx.lineWidth=1.4;cx.stroke();
+  }
+  function draw(dt){
+    const bg=cx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#f6cf78');bg.addColorStop(.5,'#eeb95a');bg.addColorStop(1,'#d59a38');
+    cx.globalCompositeOperation='source-over';cx.globalAlpha=1;cx.fillStyle=bg;cx.fillRect(0,0,W,H);
+    L.forEach(dune);
+    cx.globalCompositeOperation='lighter';
+    for(let i=0;i<4;i++){
+      const s=Math.max(W,H)*(.65+.12*i),x=W*(.5+.42*Math.sin(t*.09+i*1.7)),y=H*(.32+.24*Math.cos(t*.11+i*1.3));
+      cx.globalAlpha=.22+.1*Math.sin(t*.6+i*2);
+      cx.drawImage(sprite,x-s/2,y-s/2,s,s);
+    }
+    const wind=1+.6*Math.sin(t*.35)+.25*Math.sin(t*1.1);
+    for(const p of grains){
+      p.x+=(20+64*p.z)*wind*dt;
+      p.y+=Math.sin(t*p.sp+p.ph)*8*dt*(.3+p.z);
+      if(p.x>W+12){p.x=-12;p.y=R()*H}
+      if(p.y<0)p.y=H;else if(p.y>H)p.y=0;
+      const tw=.5+.5*Math.sin(t*p.sp*2+p.ph);
+      if(p.g){
+        const s=10+14*p.z;cx.globalAlpha=.25+.45*tw;cx.drawImage(sprite,p.x-s/2,p.y-s/2,s,s);
+      }else{
+        const s=.8+1.6*p.z;cx.globalAlpha=.25+.55*tw*(.5+p.z*.5);cx.fillStyle='#fff4cf';
+        cx.fillRect(p.x,p.y,s*(2+3*p.z*wind),s*.7);
+      }
+    }
+    /* star glints */
+    cx.strokeStyle='#fff8dc';cx.lineWidth=1;
+    for(const g of glints){
+      const sn=Math.sin(t*g.sp+g.ph);
+      if(sn<=0){g.x=R();g.y=R();continue}
+      const a=Math.pow(sn,8);if(a<.03)continue;
+      const x=g.x*W,y=g.y*H;
+      cx.globalAlpha=a;cx.drawImage(sprite,x-g.s*1.2,y-g.s*1.2,g.s*2.4,g.s*2.4);
+      cx.beginPath();cx.moveTo(x-g.s,y);cx.lineTo(x+g.s,y);cx.moveTo(x,y-g.s);cx.lineTo(x,y+g.s);cx.stroke();
+    }
+    /* tap sparkles */
+    for(let i=bursts.length-1;i>=0;i--){
+      const b=bursts[i];b.l+=dt;
+      if(b.l>b.life){bursts.splice(i,1);continue}
+      b.x+=b.vx*dt;b.y+=b.vy*dt;b.vy+=90*dt;b.vx*=.98;
+      const a=1-b.l/b.life,s=4+9*a;
+      cx.globalAlpha=a;cx.drawImage(sprite,b.x-s/2,b.y-s/2,s,s);
+    }
+    cx.globalAlpha=1;cx.globalCompositeOperation='source-over';
+  }
+  function loop(ts){const dt=Math.min(.05,(ts-prev)/1000||0);prev=ts;t+=dt;draw(dt);requestAnimationFrame(loop)}
+  size();
+  addEventListener('resize',size);
+  if(still){t=3;draw(0)}else{
+    requestAnimationFrame(loop);
+    addEventListener('pointerdown',e=>{
+      if(bursts.length>160)return;
+      for(let i=0;i<16;i++){const a=R()*6.283,v=40+R()*120;bursts.push({x:e.clientX,y:e.clientY,vx:Math.cos(a)*v,vy:Math.sin(a)*v-30,l:0,life:.6+R()*.5})}
+    },{passive:true});
+  }
+})();
+
+/* ---------- App ---------- */
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>'x'+Math.random().toString(36).slice(2,8);
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+try{const tg=window.Telegram&&window.Telegram.WebApp;if(tg){tg.ready();tg.expand()}}catch(e){}
+
+/* Everything below is editable from the admin panel */
+const DEF={
+  ver:2,
+  name:'SAND WORLD',
+  tagline:'Mine SAND • Complete tasks • Earn',
+  sandPerUsdc:1000000,
+  refReward:0.05,
+  refMinutes:1,
+  refNeedsMine:true,
+  tz:'local',
+  mine:{start:'16:00',end:'18:00',min:0.5,max:0.5,fee:15},
+  ref:{day:0,min:1,max:5,fee:15},
+  welcome:{amount:0.05,limit:100,claimed:0,fee:0,minutes:5},
+  adminPass:'sand-admin',
+  tiers:[
+    {id:'t1',name:'Dust Mine',refs:1,rate:100},
+    {id:'t2',name:'Dune Mine',refs:10,rate:500},
+    {id:'t3',name:'Caravan Mine',refs:30,rate:700},
+    {id:'t4',name:'Oasis Mine',refs:50,rate:1000},
+    {id:'t5',name:'Canyon Mine',refs:100,rate:1000},
+    {id:'t6',name:'Sahara Mine',refs:2000,rate:1000000},
+    {id:'t7',name:'Empire Mine',refs:5000,rate:2000000},
+    {id:'t8',name:'Pharaoh Mine',refs:10000,rate:5000000}
+  ],
+  tasks:[
+    {id:'k1',n:'Join SAND WORLD Telegram',r:500,l:'https://t.me/'},
+    {id:'k2',n:'Follow official channel',r:300,l:'https://t.me/'},
+    {id:'k3',n:'Invite a friend',r:200,l:'#'}
+  ]
+};
+const DEFS={sand:0,refs:1,code:'SAND-7K4P',tgId:'demo-account-1',owned:[],active:null,done:{},refWithdrawn:0,appSecs:0,wb:{claimed:false,withdrawn:false},friends:[],hist:[]};
+
+const merge=(d,v)=>{
+  if(Array.isArray(d))return Array.isArray(v)?v:d;
+  if(d&&typeof d==='object'){
+    if(!Object.keys(d).length)return v&&typeof v==='object'?v:d;
+    const o={};for(const k in d)o[k]=merge(d[k],v==null?undefined:v[k]);return o;
+  }
+  return v===undefined?d:v;
+};
+const rd=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+const rawCfg=rd('sw_cfg');
+let C=merge(clone(DEF),rawCfg);
+if(rawCfg&&!rawCfg.ver){C.mine.min=0.5;C.mine.max=0.5;C.refMinutes=1}   /* settings saved by the first version */
+const S=merge(clone(DEFS),rd('sw_state'));
+const R={mining:false,sec:0};
+const DEV={fp:null};
+let route='mine',unlocked=false;
+const save=()=>{try{localStorage.setItem('sw_cfg',JSON.stringify(C));localStorage.setItem('sw_state',JSON.stringify(S))}catch(e){}};
+
+/* ---------- helpers ---------- */
+const nf=n=>Math.floor(n).toLocaleString();
+const usd=(n,d=4)=>Number(n).toFixed(d);
+const trim=n=>{const s=Number(Number(n).toFixed(6)).toString();return /e/.test(s)?Number(n).toFixed(6):s};
+const usdOf=sand=>sand/Math.max(C.sandPerUsdc,1);
+const tiers=()=>C.tiers.slice().sort((a,b)=>a.refs-b.refs||a.rate-b.rate);
+const activeMine=()=>{const t=C.tiers.find(x=>x.id===S.active);return t&&S.owned.includes(t.id)?t:null};
+const isValid=f=>f.mins>=C.refMinutes&&(!C.refNeedsMine||f.mine);
+const refs=()=>S.refs+S.friends.filter(isValid).length;
+const getP=p=>p.split('.').reduce((o,k)=>o[k],C);
+const setP=(p,v)=>{const a=p.split('.'),k=a.pop();a.reduce((o,x)=>o[x],C)[k]=v};
+const L=n=>n==='friends'?S.friends:C[n];
+const setL=(n,v)=>{if(n==='friends')S.friends=v;else C[n]=v};
+const fmtT=s=>{const [h,m]=String(s||'0:0').split(':');const H=+h||0,M=+m||0;return ((H%12)||12)+':'+String(M).padStart(2,'0')+' '+(H<12?'AM':'PM')};
+const toS=s=>{const [h,m]=String(s||'0:0').split(':');return (+h||0)*3600+(+m||0)*60};
+const p2=n=>String(n).padStart(2,'0');
+const fmtCount=s=>{s=Math.max(0,Math.floor(s));const d=Math.floor(s/86400),r=s%86400;return (d?d+'d ':'')+p2(Math.floor(r/3600))+':'+p2(Math.floor(r%3600/60))+':'+p2(r%60)};
+const fmtTimer=s=>{s=Math.floor(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?h+':'+p2(m)+':'+p2(x):p2(m)+':'+p2(x)};
+const toast=t=>{const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(window.__to);window.__to=setTimeout(()=>e.style.display='none',2600)};
+const RN={mine:'Mine',ref:'Referral',welcome:'Welcome bonus'};
+
+/* ---------- phone check: one Telegram account per phone ----------
+   Demo only: the phone fingerprint and the list of Telegram accounts seen on it are kept in this
+   browser. For real users, send the fingerprint + Telegram ID to your server and compare there. */
+const myTgId=()=>{try{const u=window.Telegram.WebApp.initDataUnsafe.user;if(u&&u.id)return String(u.id)}catch(e){}return S.tgId};
+async function fingerprint(){
+  const parts=[navigator.userAgent||'',navigator.platform||'',navigator.language||'',
+    (screen.width||0)+'x'+(screen.height||0)+'x'+(screen.colorDepth||0),window.devicePixelRatio||1,
+    (Intl.DateTimeFormat().resolvedOptions().timeZone)||'',navigator.hardwareConcurrency||'',navigator.deviceMemory||''];
+  try{const g=document.createElement('canvas').getContext('webgl');const e=g&&g.getExtension('WEBGL_debug_renderer_info');if(e)parts.push(g.getParameter(e.UNMASKED_RENDERER_WEBGL))}catch(e){}
+  const s=parts.join('|');
+  try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,32)}
+  catch(e){let h=0;for(const ch of s)h=(h*31+ch.charCodeAt(0))|0;return 'f'+(h>>>0).toString(16)}
+}
+const readClaims=()=>{const r=rd('sw_claims');return r&&r.fps?r:{fps:{}}};
+function register(fp,id){
+  const r=readClaims(),a=r.fps[fp]||(r.fps[fp]=[]);
+  if(!a.includes(id)){a.push(id);try{localStorage.setItem('sw_claims',JSON.stringify(r))}catch(e){}}
+}
+const devIds=()=>DEV.fp?(readClaims().fps[DEV.fp]||[]):[];
+const deviceOk=()=>!!DEV.fp&&devIds().length<=1;
+const MULTI='More than one Telegram account was found on this phone';
+
+/* ---------- withdrawal rules per route ---------- */
+const rc=r=>r==='mine'?C.mine:r==='ref'?C.ref:{min:C.welcome.amount,max:C.welcome.amount,fee:C.welcome.fee};
+const availOf=r=>r==='mine'?usdOf(S.sand):r==='ref'?Math.max(0,refs()*C.refReward-S.refWithdrawn):(S.wb.claimed&&!S.wb.withdrawn?C.welcome.amount:0);
+function clock(){
+  const d=new Date();
+  return C.tz==='utc'
+    ?{day:d.getUTCDay(),s:d.getUTCHours()*3600+d.getUTCMinutes()*60+d.getUTCSeconds()}
+    :{day:d.getDay(),s:d.getHours()*3600+d.getMinutes()*60+d.getSeconds()};
+}
+function winState(r){
+  if(r==='welcome'){
+    const need=C.welcome.minutes*60;let msg='';
+    if(!S.wb.claimed)msg='Claim your welcome bonus on the Home tab first';
+    else if(S.wb.withdrawn)msg='Welcome bonus already withdrawn';
+    else if(!DEV.fp)msg='Checking your phone…';
+    else if(!deviceOk())msg='Not available: '+MULTI.toLowerCase();
+    else if(S.appSecs<need)msg='Stay in the app '+fmtTimer(need-S.appSecs)+' more';
+    return {open:!msg,msg};
+  }
+  const k=clock();
+  if(r==='mine'){
+    const a=toS(C.mine.start),b=toS(C.mine.end);
+    const open=a<=b?(k.s>=a&&k.s<b):(k.s>=a||k.s<b);
+    const secs=open?((b-k.s+86400)%86400):((a-k.s+86400)%86400);
+    return {open,secs,text:'Daily '+fmtT(C.mine.start)+' – '+fmtT(C.mine.end)+(C.tz==='utc'?' UTC':'')};
+  }
+  const day=+C.ref.day,open=k.day===day;
+  const secs=open?86400-k.s:((day-k.day+7)%7)*86400-k.s;
+  return {open,secs,text:'Every '+DAYS[day]+(C.tz==='utc'?' (UTC)':'')};
+}
+
+/* ---------- rendering ---------- */
+function renderBal(){
+  $('sand').textContent=nf(S.sand);
+  $('usd').textContent='≈ '+usd(usdOf(S.sand))+' USDC';
+}
+function renderWb(){
+  const left=Math.max(0,C.welcome.limit-C.welcome.claimed),amt=trim(C.welcome.amount),lim=nf(C.welcome.limit);
+  let h;
+  if(S.wb.claimed){
+    h=S.wb.withdrawn
+      ?'<b>Welcome bonus withdrawn</b><p class="muted" style="margin:6px 0 0">'+amt+' USDC requested. Thanks for joining early.</p>'
+      :'<b>Welcome bonus: '+amt+' USDC 🌟</b><p class="muted">Claimed. You can withdraw it from the Wallet after '+trim(C.welcome.minutes)+' minutes in the app.</p><button class="btn primary" data-go="wallet" data-route="welcome" style="width:100%">Go to welcome bonus</button>';
+  }else if(left<=0){
+    h='<b>Welcome bonus is full</b><p class="muted" style="margin:6px 0 0">All '+lim+' welcome bonuses have been claimed.</p>';
+  }else if(DEV.fp&&!deviceOk()){
+    h='<b>Welcome bonus not available</b><p class="muted" style="margin:6px 0 0">'+MULTI+'. The bonus is only for phones with a single Telegram account.</p>';
+  }else{
+    h='<b>Claim your welcome bonus 🌟</b><div class="big">'+amt+' USDC</div><p class="muted">One time, for the first '+lim+' users only — '+nf(left)+' left. Only for phones with a single Telegram account.</p><button class="btn primary" id="claimWb" style="width:100%"'+(DEV.fp?'':' disabled')+'>'+(DEV.fp?'Claim welcome bonus':'Checking your phone…')+'</button>';
+  }
+  $('wbCard').innerHTML=h;
+}
+function renderHome(){
+  const m=activeMine();
+  document.title=C.name;$('appName').textContent=C.name;$('appTag').textContent=C.tagline;
+  $('curName').textContent=m?'Current Mine · '+m.name:'No mine yet';
+  $('curRate').textContent=m?nf(m.rate)+' SAND':'—';
+  $('curUsd').textContent=m?'≈ '+trim(usdOf(m.rate))+' USDC / hour':'Buy a mine to earn SAND every hour';
+  $('mineCta').hidden=!!m;
+  $('mineCard').classList.toggle('on',R.mining);
+  $('mine').classList.toggle('run',R.mining);
+  $('mine').textContent=R.mining?'⏸ Pause Mine':'⛏ Start Mine';
+  $('mineState').textContent=R.mining?'Mining':(m?'Ready':'No mine');
+  $('mineText').textContent=R.mining?'Mining SAND...':(m?'Start your mine':'Buy a mine to begin');
+  $('refs').textContent=nf(refs());
+  $('done').textContent=C.tasks.filter(t=>S.done[t.id]).length;
+  $('convCard').innerHTML='<b>Conversion</b><p class="muted">100 SAND = '+trim(usdOf(100))+' USDC</p><p class="muted">'+nf(C.sandPerUsdc)+' SAND = 1 USDC</p>';
+  renderWb();
+}
+function renderTasks(){
+  $('tasksList').innerHTML=C.tasks.map(t=>{const d=S.done[t.id];
+    return '<div class="card task"><div class="taskicon">⌛</div><div class="taskmain"><b>'+esc(t.n)+'</b><span class="muted">Complete task</span><div class="reward">+'+nf(t.r)+' SAND</div><button data-task="'+t.id+'" '+(d?'disabled':'')+'>'+(d?'Completed':'Open task')+'</button></div></div>';
+  }).join('')||'<div class="card muted">No tasks yet. Add tasks from the admin panel.</div>';
+}
+function renderBuy(){
+  const m=activeMine(),rf=refs();
+  $('buySummary').innerHTML='<b>'+nf(rf)+' valid referral'+(rf===1?'':'s')+'</b><p class="muted" style="margin:6px 0 0">'
+    +(m?'Active mine: '+esc(m.name)+' · '+nf(m.rate)+' SAND / hour. ':'You have no mine yet. ')
+    +'Buying a mine keeps your referrals — each one still earns '+trim(C.refReward)+' USDC.</p>';
+  $('buyList').innerHTML=tiers().map(t=>{
+    const owned=S.owned.includes(t.id),act=m&&m.id===t.id,ok=rf>=t.refs,need=t.refs-rf;
+    let btn,pill;
+    if(act){btn='<button class="btn soft" disabled>Active mine</button>';pill='<span class="pill act">Active</span>'}
+    else if(owned){btn='<button class="btn primary" data-use="'+t.id+'">Use this mine</button>';pill='<span class="pill own">Owned</span>'}
+    else if(ok){btn='<button class="btn primary" data-buy="'+t.id+'">Buy mine</button>';pill='<span class="pill open">Ready to buy</span>'}
+    else{btn='<button class="btn soft" disabled>Need '+nf(need)+' more referral'+(need===1?'':'s')+'</button>';pill='<span class="pill lock">Locked</span>'}
+    const bar=(!ok&&!owned)?'<div class="pbar"><i style="width:'+Math.min(100,rf/Math.max(t.refs,1)*100)+'%"></i></div>':'';
+    return '<div class="card tier'+(!ok&&!owned?' locked':'')+'"><div class="tierhead"><div class="taskicon">⛏</div><div class="taskmain"><b>'+esc(t.name)+'</b><span class="muted">'+nf(t.refs)+' valid referral'+(t.refs===1?'':'s')+'</span></div>'+pill+'</div>'
+      +'<div class="big">'+nf(t.rate)+' SAND <small>/ hour</small></div><div class="muted">≈ '+trim(usdOf(t.rate))+' USDC / hour</div>'+bar+btn+'</div>';
+  }).join('')||'<div class="card muted">No mines available yet. Add mines from the admin panel.</div>';
+}
+function friendNeeds(f){
+  const a=[];
+  if(C.refNeedsMine&&!f.mine)a.push('activate a mine');
+  if(f.mins<C.refMinutes)a.push('spend '+trim(C.refMinutes-f.mins)+' more min in the app');
+  return a;
+}
+function renderRefs(){
+  $('code').textContent=S.code;
+  const rf=refs();
+  $('refEarn').innerHTML='<b>Referral earnings</b><div class="big">'+usd(availOf('ref'))+' USDC</div><p class="muted" style="margin:0 0 10px">'+trim(C.refReward)+' USDC per valid referral. Withdraw on '+DAYS[C.ref.day]+'s.</p><button class="btn primary" data-go="wallet" data-route="ref" style="width:100%">Withdraw referral earnings</button>';
+  const next=tiers().find(t=>t.refs>rf);
+  $('refProg').innerHTML=(next
+    ?'<b>'+nf(rf)+' / '+nf(next.refs)+' valid referrals</b><p class="muted">Next mine: '+esc(next.name)+' — '+nf(next.rate)+' SAND / hour.</p><div class="pbar" style="margin:0 0 10px"><i style="width:'+Math.min(100,rf/Math.max(next.refs,1)*100)+'%"></i></div>'
+    :'<b>'+nf(rf)+' valid referrals</b><p class="muted">Every mine is unlocked.</p>')
+    +'<p class="muted" style="margin:0">A referral becomes valid when your friend '+(C.refNeedsMine?'activates a mine and ':'')+'spends '+trim(C.refMinutes)+' minute'+(C.refMinutes===1?'':'s')+' in '+esc(C.name)+'. Then '+trim(C.refReward)+' USDC drops into your referral earnings.</p>';
+  $('friendsCard').hidden=!S.friends.length;
+  $('friendsCard').innerHTML='<b>Your friends</b>'+S.friends.map(f=>{
+    const need=friendNeeds(f);
+    return '<div class="hrow"><div><b>'+esc(f.name)+'</b><div class="muted">'+(need.length?'Needs to '+need.join(' and '):'+'+trim(C.refReward)+' USDC dropped')+'</div></div>'+(need.length?'<span class="pill lock">Pending</span>':'<span class="pill open">Valid</span>')+'</div>';
+  }).join('');
+}
+function updFee(){
+  const c=rc(route),a=Number($('amount').value);
+  if(a>0){const fee=a*c.fee/100;$('feeCalc').textContent='Fee '+usd(fee)+' USDC • You receive '+usd(a-fee)+' USDC'}else $('feeCalc').textContent='';
+}
+function updWin(){
+  const st=winState(route);
+  if(route==='welcome'){
+    $('winStatus').innerHTML=st.open?'<span class="pill open">Ready</span><span class="muted">You can withdraw your welcome bonus</span>':'<span class="pill shut">Locked</span><span class="muted">'+esc(st.msg)+'</span>';
+  }else{
+    $('winStatus').innerHTML=st.open
+      ?'<span class="pill open">Open</span><span class="muted">Closes in '+fmtCount(st.secs)+'</span>'
+      :'<span class="pill shut">Closed</span><span class="muted">Opens in '+fmtCount(st.secs)+'</span>';
+  }
+  $('withdraw').disabled=!st.open;
+  $('withdraw').textContent=st.open?'Request Withdrawal':(route==='welcome'?'Not ready yet':'Withdrawals closed');
+}
+function renderWallet(){
+  const c=rc(route),st=winState(route),eq=c.min===c.max;
+  document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.route===route));
+  $('walletusd').textContent=usd(availOf(route))+' USDC';
+  $('availLabel').textContent={mine:'Available from mining, tasks and bonuses',ref:'Available from referrals',welcome:'One-time welcome bonus'}[route];
+  $('limits').textContent=route==='welcome'
+    ?'One-time bonus of '+trim(c.min)+' USDC • Fee '+trim(c.fee)+'% • Needs '+trim(C.welcome.minutes)+' minutes in the app'
+    :st.text+' • '+(eq?'Exact amount '+trim(c.min)+' USDC':'Minimum '+trim(c.min)+' USDC • Maximum '+trim(c.max)+' USDC')+' • Normal fee '+trim(c.fee)+'%';
+  const inp=$('amount');
+  if(route==='welcome'){inp.value=trim(c.min);inp.readOnly=true}
+  else{inp.readOnly=false;if(eq&&!inp.value)inp.value=trim(c.min)}
+  updWin();updFee();
+}
+function renderHist(){
+  $('hist').innerHTML=S.hist.length
+    ?S.hist.slice(0,5).map(h=>'<div class="hrow"><div><b>'+RN[h.route]+' · '+usd(h.a)+' USDC</b><div class="muted">You receive '+usd(h.net)+' USDC · '+new Date(h.ts).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</div></div><span class="pill lock">Pending</span></div>').join('')
+    :'<p class="muted" style="margin:6px 0 0">No requests yet. Withdrawals you request appear here.</p>';
+}
+function renderAll(){renderBal();renderHome();renderTasks();renderBuy();renderRefs();renderWallet();renderHist()}
+
+/* ---------- navigation ---------- */
+function go(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===p));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));
+  if(p==='admin')renderAdmin();
+  if(p==='wallet')renderWallet();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));
+function setRoute(r){route=r;$('amount').value='';renderWallet()}
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');if(!g)return;
+  if(g.dataset.route)setRoute(g.dataset.route);
+  go(g.dataset.go);
+});
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>setRoute(b.dataset.route));
+
+/* ---------- actions ---------- */
+$('mine').onclick=()=>{
+  if(!R.mining&&!activeMine()){toast('Buy a mine first');go('buy');return}
+  R.mining=!R.mining;renderHome();toast(R.mining?'Mining started':'Mining paused');
+};
+$('tasksList').addEventListener('click',e=>{
+  const b=e.target.closest('[data-task]');if(!b)return;
+  const t=C.tasks.find(x=>x.id===b.dataset.task);if(!t||S.done[t.id])return;
+  if(/^https?:/.test(t.l))window.open(t.l,'_blank');
+  S.done[t.id]=1;S.sand+=t.r;save();renderAll();toast('Demo task reward added');
+});
+$('buyList').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.buy){
+    const t=C.tiers.find(x=>x.id===b.dataset.buy);if(!t)return;
+    if(refs()<t.refs)return toast('You need '+nf(t.refs)+' valid referrals');
+    if(!S.owned.includes(t.id))S.owned.push(t.id);
+    S.active=t.id;save();renderAll();toast(t.name+' bought and active');
+  }else if(b.dataset.use){
+    const t=C.tiers.find(x=>x.id===b.dataset.use);if(!t)return;
+    S.active=t.id;save();renderAll();toast(t.name+' is now active');
+  }
+});
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(S.code);toast('Referral code copied: '+S.code)}catch(e){toast('Referral code: '+S.code)}};
+
+/* welcome bonus claim */
+$('wbCard').addEventListener('click',async e=>{
+  if(!e.target.closest('#claimWb'))return;
+  if(S.wb.claimed)return;
+  if(C.welcome.claimed>=C.welcome.limit){renderWb();return toast('All welcome bonuses have been claimed')}
+  if(!DEV.fp)return;
+  register(DEV.fp,myTgId());
+  if(!deviceOk()){renderWb();return toast(MULTI+'. The bonus is not available')}
+  S.wb.claimed=true;C.welcome.claimed++;save();renderAll();
+  toast('Welcome bonus claimed: '+trim(C.welcome.amount)+' USDC');
+});
+
+$('amount').addEventListener('input',updFee);
+$('withdraw').onclick=()=>{
+  const c=rc(route),st=winState(route),eq=c.min===c.max;
+  if(!st.open)return toast(route==='welcome'?st.msg:'Withdrawals are closed right now');
+  const a=Number($('amount').value),avail=availOf(route);
+  if(!a||a<c.min-1e-9||a>c.max+1e-9)return toast(eq?'Amount must be exactly '+trim(c.min)+' USDC':'Amount must be between '+trim(c.min)+' and '+trim(c.max)+' USDC');
+  if(a>avail+1e-9)return toast('Not enough balance');
+  if(!$('address').value.trim())return toast('Enter a wallet address');
+  const fee=a*c.fee/100;
+  if(route==='mine')S.sand=Math.max(0,S.sand-a*C.sandPerUsdc);
+  else if(route==='ref')S.refWithdrawn+=a;
+  else S.wb.withdrawn=true;
+  S.hist.unshift({route,a,fee,net:a-fee,ts:Date.now()});S.hist=S.hist.slice(0,20);
+  $('amount').value='';save();renderAll();toast('Withdrawal request created in demo mode');
+};
+
+/* ---------- admin ---------- */
+function tierRow(t){
+  const a='data-list="tiers" data-id="'+t.id+'"';
+  return '<div class="trow"><label class="fl full"><span>Mine name</span><input '+a+' data-tf="name" type="text" value="'+esc(t.name)+'"></label>'
+    +'<label class="fl"><span>Valid referrals needed</span><input '+a+' data-tf="refs" data-n="1" type="number" min="0" step="1" value="'+esc(t.refs)+'"></label>'
+    +'<label class="fl"><span>SAND per hour</span><input '+a+' data-tf="rate" data-n="1" type="number" min="0" step="any" value="'+esc(t.rate)+'"></label>'
+    +'<div class="ro">≈ <b id="ro-'+t.id+'">'+trim(usdOf(t.rate))+'</b> USDC per hour</div>'
+    +'<button class="btn danger small" data-del="tiers" data-id="'+t.id+'">Delete mine</button></div>';
+}
+function taskRow(t){
+  const a='data-list="tasks" data-id="'+t.id+'"';
+  return '<div class="trow"><label class="fl full"><span>Task name</span><input '+a+' data-tf="n" type="text" value="'+esc(t.n)+'"></label>'
+    +'<label class="fl"><span>Reward (SAND)</span><input '+a+' data-tf="r" data-n="1" type="number" min="0" step="any" value="'+esc(t.r)+'"></label>'
+    +'<label class="fl"><span>Link</span><input '+a+' data-tf="l" type="text" value="'+esc(t.l)+'"></label>'
+    +'<button class="btn danger small full" data-del="tasks" data-id="'+t.id+'">Delete task</button></div>';
+}
+const friendState=f=>{const n=friendNeeds(f);return n.length?'Pending — needs to '+n.join(' and '):'Valid — '+trim(C.refReward)+' USDC dropped'};
+function friendRow(f){
+  const a='data-list="friends" data-id="'+f.id+'"';
+  return '<div class="trow"><label class="fl full"><span>Friend name</span><input '+a+' data-tf="name" type="text" value="'+esc(f.name)+'"></label>'
+    +'<label class="fl"><span>Minutes in the app</span><input '+a+' data-tf="mins" data-n="1" type="number" min="0" step="any" value="'+esc(f.mins)+'"></label>'
+    +'<label class="fl"><span>Activated a mine</span><select '+a+' data-tf="mine" data-bool="1"><option value="0"'+(f.mine?'':' selected')+'>No</option><option value="1"'+(f.mine?' selected':'')+'>Yes</option></select></label>'
+    +'<div class="ro" id="fs-'+f.id+'">'+esc(friendState(f))+'</div>'
+    +'<button class="btn danger small" data-del="friends" data-id="'+f.id+'">Delete</button></div>';
+}
+function renderAdmin(){
+  const open=[...document.querySelectorAll('#adminBody details')].map(d=>d.open);
+  const f=(label,path,o={})=>{
+    const type=o.type||'number';
+    return '<label class="fl'+(o.full?' full':'')+'"><span>'+label+'</span><input data-p="'+path+'" '+(type==='number'?'data-n="1" step="any" min="0" inputmode="decimal" ':'')+'type="'+type+'" value="'+esc(getP(path))+'"></label>';
+  };
+  const u=(label,key,type)=>'<label class="fl"><span>'+label+'</span><input data-u="'+key+'" '+(type==='number'?'data-n="1" step="any" min="0" ':'')+'type="'+type+'" value="'+esc(S[key])+'"></label>';
+  const yn=(label,path,val)=>'<label class="fl"><span>'+label+'</span><select data-p="'+path+'" data-bool="1"><option value="1"'+(val?' selected':'')+'>Yes</option><option value="0"'+(val?'':' selected')+'>No</option></select></label>';
+  $('adminBody').innerHTML=
+   '<div class="card"><p class="muted" style="margin:0">Settings are stored in this browser. For live users, keep them in your backend/database and check withdrawal times, balances, the welcome bonus and the one-account-per-phone rule on the server.</p></div>'
+  +'<details class="card admin-box"><summary>Mines and referral requirements</summary><p class="muted">A user can buy a mine once they have this many valid referrals. USDC per hour follows the conversion rate.</p>'
+    +C.tiers.map(tierRow).join('')+'<button class="btn soft" data-add="tiers" style="margin-top:10px;width:100%">Add mine</button></details>'
+  +'<details class="card admin-box"><summary>Rewards and referrals</summary><div class="fgrid">'
+    +f('SAND per 1 USDC','sandPerUsdc')+f('USDC per valid referral','refReward')+f('Minutes a friend must spend in the app','refMinutes')+yn('Friend must activate a mine',"refNeedsMine",C.refNeedsMine)+'</div></details>'
+  +'<details class="card admin-box"><summary>Withdrawals</summary>'
+    +'<div class="sub">Mine withdrawal (SAND to USDC)</div><div class="fgrid">'+f('Opens daily at','mine.start',{type:'time'})+f('Closes daily at','mine.end',{type:'time'})+f('Minimum USDC','mine.min')+f('Maximum USDC','mine.max')+f('Fee %','mine.fee')+'</div>'
+    +'<div class="sub">Referral withdrawal</div><div class="fgrid"><label class="fl"><span>Withdrawal day</span><select data-p="ref.day" data-n="1">'+DAYS.map((d,i)=>'<option value="'+i+'"'+(+C.ref.day===i?' selected':'')+'>'+d+'</option>').join('')+'</select></label>'+f('Minimum USDC','ref.min')+f('Maximum USDC','ref.max')+f('Fee %','ref.fee')+'</div>'
+    +'<div class="sub">Clock used for withdrawal times</div><div class="fgrid"><label class="fl full"><span>Time zone</span><select data-p="tz"><option value="local"'+(C.tz==='local'?' selected':'')+'>Each user’s device time</option><option value="utc"'+(C.tz==='utc'?' selected':'')+'>UTC for everyone</option></select></label></div></details>'
+  +'<details class="card admin-box"><summary>Welcome bonus</summary><p class="muted">One time per user, for the first users only, and only on phones with a single Telegram account.</p><div class="fgrid">'
+    +f('Bonus amount (USDC)','welcome.amount')+f('Number of users','welcome.limit')+f('Already claimed','welcome.claimed')+f('Withdrawal fee %','welcome.fee')+f('Minutes in the app before withdrawing','welcome.minutes')+'</div></details>'
+  +'<details class="card admin-box"><summary>Tasks</summary>'+C.tasks.map(taskRow).join('')+'<button class="btn soft" data-add="tasks" style="margin-top:10px;width:100%">Add task</button></details>'
+  +'<details class="card admin-box"><summary>App details</summary><div class="fgrid">'+f('App name','name',{type:'text',full:true})+f('Tagline','tagline',{type:'text',full:true})+f('Admin passcode','adminPass',{type:'text',full:true})+'</div></details>'
+  +'<details class="card admin-box"><summary>Demo user and testing</summary><div class="fgrid">'+u('SAND balance','sand','number')+u('Valid referrals (added by hand)','refs','number')+u('Referral code','code','text')+u('Telegram account ID (demo)','tgId','text')+'</div>'
+    +'<div class="sub">Test referrals</div><p class="muted" style="margin:4px 0 0">A referral counts once the friend has a mine and enough minutes in the app.</p>'
+    +S.friends.map(friendRow).join('')+'<button class="btn soft" data-add="friends" style="margin-top:10px;width:100%">Add test referral</button>'
+    +'<button class="btn danger small" data-reset="claims" style="margin-top:12px;width:100%">Reset welcome bonus claims and phone check</button>'
+    +'<button class="btn danger small" data-reset="user" style="margin-top:9px;width:100%">Reset user progress</button></details>'
+  +'<button class="btn danger" data-reset="cfg" style="width:100%;margin-bottom:11px">Reset all settings to defaults</button>';
+  document.querySelectorAll('#adminBody details').forEach((d,i)=>{d.open=open.length?!!open[i]:i===0});
+}
+let savedT;
+function afterEdit(){
+  save();renderAll();
+  C.tiers.forEach(t=>{const e=$('ro-'+t.id);if(e)e.textContent=trim(usdOf(t.rate))});
+  S.friends.forEach(f=>{const e=$('fs-'+f.id);if(e)e.textContent=friendState(f)});
+  const s=$('saved');s.textContent='Saved';clearTimeout(savedT);
+  savedT=setTimeout(()=>s.textContent='Changes save automatically on this device.',1600);
+}
+$('admin').addEventListener('input',e=>{
+  const el=e.target,d=el.dataset;
+  if(d.p===undefined&&d.tf===undefined&&d.u===undefined)return;
+  if(d.u==='tgId')return;
+  const val=d.bool?el.value==='1':(d.n?(parseFloat(el.value)||0):el.value);
+  if(d.p!==undefined)setP(d.p,val);
+  else if(d.tf!==undefined){const it=L(d.list).find(x=>x.id===d.id);if(it)it[d.tf]=val}
+  else S[d.u]=val;
+  afterEdit();
+});
+$('admin').addEventListener('change',e=>{
+  const el=e.target;if(el.dataset.u!=='tgId')return;
+  S.tgId=el.value.trim()||'demo-account-1';
+  if(DEV.fp)register(DEV.fp,myTgId());
+  save();renderAll();toast('Telegram account ID set to '+S.tgId);
+});
+function arm(b,fn){
+  if(b.dataset.armed){fn();return}
+  b.dataset.armed='1';const old=b.textContent;b.textContent='Tap again to confirm';
+  setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent=old}},3000);
+}
+$('admin').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.add==='tiers'){C.tiers.push({id:uid(),name:'New mine',refs:1,rate:100});save();renderAdmin();renderAll()}
+  else if(b.dataset.add==='tasks'){C.tasks.push({id:uid(),n:'New task',r:100,l:'https://t.me/'});save();renderAdmin();renderAll()}
+  else if(b.dataset.add==='friends'){S.friends.push({id:uid(),name:'Friend '+(S.friends.length+1),mins:0,mine:false});save();renderAdmin();renderAll()}
+  else if(b.dataset.del)arm(b,()=>{setL(b.dataset.del,L(b.dataset.del).filter(x=>x.id!==b.dataset.id));save();renderAdmin();renderAll();toast('Deleted')});
+  else if(b.dataset.reset==='user')arm(b,()=>{Object.assign(S,clone(DEFS));R.mining=false;R.sec=0;if(DEV.fp)register(DEV.fp,myTgId());save();renderAdmin();renderAll();toast('User progress reset')});
+  else if(b.dataset.reset==='claims')arm(b,()=>{try{localStorage.removeItem('sw_claims')}catch(x){}C.welcome.claimed=0;S.wb={claimed:false,withdrawn:false};if(DEV.fp)register(DEV.fp,myTgId());save();renderAdmin();renderAll();toast('Welcome bonus claims reset')});
+  else if(b.dataset.reset==='cfg')arm(b,()=>{C=clone(DEF);save();renderAdmin();renderAll();toast('Settings reset to defaults')});
+});
+
+/* admin passcode gate */
+const openGate=()=>{$('gate').classList.add('show');$('pass').value='';setTimeout(()=>$('pass').focus(),50)};
+const closeGate=()=>$('gate').classList.remove('show');
+$('adminBtn').onclick=()=>unlocked?go('admin'):openGate();
+$('cancel').onclick=closeGate;
+$('unlock').onclick=()=>{if($('pass').value===C.adminPass){unlocked=true;closeGate();go('admin')}else toast('Wrong passcode')};
+$('pass').addEventListener('keydown',e=>{if(e.key==='Enter')$('unlock').click();if(e.key==='Escape')closeGate()});
+if(location.hash==='#admin')openGate();
+
+/* ---------- live tick ---------- */
+let last=Date.now(),n=0;
+setInterval(()=>{
+  const now=Date.now(),dt=Math.min(60,Math.max(0,(now-last)/1000));last=now;
+  if(!document.hidden)S.appSecs+=Math.min(dt,2);
+  if(R.mining){
+    const m=activeMine();
+    if(!m){R.mining=false;renderHome()}
+    else{R.sec+=dt;S.sand+=m.rate*dt/3600}
+  }
+  if(++n%10===0)save();
+  renderBal();
+  $('timer').textContent=fmtTimer(R.sec);
+  $('bar').style.width=((R.sec%3600)/36)+'%';
+  if($('wallet').classList.contains('active'))updWin();
+},1000);
+
+renderAll();
+fingerprint().then(fp=>{DEV.fp=fp;register(fp,myTgId());renderAll()});
+})();
+</script>
+</body>
+</html>
